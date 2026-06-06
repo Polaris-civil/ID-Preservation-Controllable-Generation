@@ -1,6 +1,6 @@
 # ID-Preservation Controllable Generation
 
-[![CI](https://github.com/CodexTesla/ID-Preservation-Controllable-Generation/actions/workflows/ci.yml/badge.svg)](https://github.com/CodexTesla/ID-Preservation-Controllable-Generation/actions/workflows/ci.yml)
+[![CI](https://github.com/Polaris-civil/ID-Preservation-Controllable-Generation/actions/workflows/ci.yml/badge.svg)](https://github.com/Polaris-civil/ID-Preservation-Controllable-Generation/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.9_%7C_3.10_%7C_3.12-blue?logo=python)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-green.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![uv](https://img.shields.io/badge/build-uv-724d97?logo=astral)](https://docs.astral.sh/uv/)
