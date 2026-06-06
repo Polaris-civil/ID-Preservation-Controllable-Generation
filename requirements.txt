@@ -1,0 +1,9 @@
+# The core package intentionally has no hard runtime dependencies.
+# Install with:
+#   pip install -e .
+#
+# For development:
+#   pip install -r requirements-dev.txt
+#
+# For real model training/inference:
+#   pip install -r requirements-full.txt

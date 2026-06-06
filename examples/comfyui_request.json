@@ -1,0 +1,28 @@
+{
+  "fan_refs": [
+    "datasets/fan_identity/fan_01.png",
+    "datasets/fan_identity/fan_02.png"
+  ],
+  "celebrity_refs": [
+    "datasets/celebrity/star_01.png"
+  ],
+  "pose_image": "datasets/poses/two_person_openpose.png",
+  "prompt": "a fan and a famous singer taking a natural full-body photo together",
+  "negative_prompt": "low quality, deformed hands, face swap artifacts, identity drift",
+  "clothing_prompt": "coordinated concert outfits with realistic fabric texture",
+  "scene_prompt": "backstage hallway, realistic camera flash, coherent shadows",
+  "output_path": "outputs/comfyui_result.png",
+  "controls": {
+    "use_lora": true,
+    "use_ip_adapter": true,
+    "use_controlnet": true,
+    "use_style_lora": false
+  },
+  "model": {
+    "backend": "comfyui",
+    "comfyui_url": "http://127.0.0.1:8188",
+    "comfyui_workflow": "workflows/comfyui_workflow.json",
+    "submit_comfyui_job": false,
+    "seed": 1234
+  }
+}

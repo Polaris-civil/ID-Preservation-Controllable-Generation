@@ -1,0 +1,97 @@
+{
+  "name": "ID-Preservation Controllable Generation",
+  "version": "0.1.0",
+  "description": "Template workflow showing SDXL/HunyuanDiT + LoRA + IP-Adapter + OpenPose ControlNet + Style LoRA/Redux composition.",
+  "nodes": [
+    {
+      "id": 1,
+      "type": "CheckpointLoaderSimple",
+      "title": "Load Base Text-to-Image Model",
+      "inputs": {
+        "ckpt_name": "sd_xl_base_1.0.safetensors"
+      }
+    },
+    {
+      "id": 2,
+      "type": "LoraLoader",
+      "title": "Load Fan Identity LoRA",
+      "inputs": {
+        "model": [1, 0],
+        "clip": [1, 1],
+        "lora_name": "fan_identity_lora.safetensors",
+        "strength_model": 0.8,
+        "strength_clip": 0.7
+      }
+    },
+    {
+      "id": 3,
+      "type": "IPAdapterAdvanced",
+      "title": "Reference Face Structure",
+      "inputs": {
+        "model": [2, 0],
+        "image": "fan_and_celebrity_refs",
+        "weight": 0.75,
+        "weight_type": "linear"
+      }
+    },
+    {
+      "id": 4,
+      "type": "ControlNetLoader",
+      "title": "OpenPose ControlNet",
+      "inputs": {
+        "control_net_name": "controlnet-openpose-sdxl.safetensors"
+      }
+    },
+    {
+      "id": 5,
+      "type": "ControlNetApplyAdvanced",
+      "title": "Apply Pose Control",
+      "inputs": {
+        "positive": "positive_conditioning",
+        "negative": "negative_conditioning",
+        "control_net": [4, 0],
+        "image": "openpose_image",
+        "strength": 0.85,
+        "start_percent": 0.0,
+        "end_percent": 0.8
+      }
+    },
+    {
+      "id": 6,
+      "type": "KSampler",
+      "title": "Sample",
+      "inputs": {
+        "model": [3, 0],
+        "positive": [5, 0],
+        "negative": [5, 1],
+        "seed": 42,
+        "steps": 30,
+        "cfg": 6.5,
+        "sampler_name": "dpmpp_2m",
+        "scheduler": "karras"
+      }
+    },
+    {
+      "id": 7,
+      "type": "VAEDecode",
+      "title": "Decode Image",
+      "inputs": {
+        "samples": [6, 0],
+        "vae": [1, 2]
+      }
+    },
+    {
+      "id": 8,
+      "type": "SaveImage",
+      "title": "Save Result",
+      "inputs": {
+        "images": [7, 0],
+        "filename_prefix": "idpcg_result"
+      }
+    }
+  ],
+  "notes": [
+    "Node types follow common ComfyUI extension naming and may need adjustment for local plugins.",
+    "Use the Python CLI to create decoupled prompts and LoRA manifests, then paste prompts into the conditioning nodes."
+  ]
+}

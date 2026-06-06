@@ -1,0 +1,5 @@
+include README.md
+include LICENSE
+include requirements.txt
+recursive-include workflows *.json
+recursive-include src/id_preservation_cg/assets *.json
