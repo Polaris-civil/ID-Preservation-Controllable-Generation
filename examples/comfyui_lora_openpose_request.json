@@ -1,0 +1,44 @@
+{
+  "fan_refs": [
+    "examples/assets/fan_placeholder.jpg"
+  ],
+  "celebrity_refs": [
+    "examples/assets/star_placeholder.jpg"
+  ],
+  "pose_image": "examples/assets/openpose_two_person.png",
+  "prompt": "two people standing together, friendly fan photo with a singer, realistic portrait, soft lighting, detailed faces",
+  "negative_prompt": "low quality, blurry, distorted face, bad anatomy, extra limbs, bad hands",
+  "clothing_prompt": "casual modern outfits",
+  "scene_prompt": "backstage hallway, warm light",
+  "output_path": "outputs/comfyui_lora_openpose.png",
+  "controls": {
+    "use_lora": true,
+    "use_ip_adapter": false,
+    "use_controlnet": true,
+    "use_style_lora": false,
+    "controlnet_weight": 0.85
+  },
+  "model": {
+    "backend": "comfyui",
+    "base_model": "v1-5-pruned-emaonly.safetensors",
+    "comfyui_url": "http://127.0.0.1:8188",
+    "comfyui_workflow": "workflows/comfyui_api_lora_openpose.json",
+    "submit_comfyui_job": true,
+    "download_comfyui_output": true,
+    "seed": 20260606,
+    "width": 512,
+    "height": 512,
+    "batch_size": 1,
+    "steps": 8,
+    "cfg": 1.5,
+    "sampler_name": "lcm",
+    "scheduler": "simple",
+    "lora_name": "lcm-lora-sdv1-5.safetensors",
+    "lora_strength_model": 0.8,
+    "lora_strength_clip": 0.8,
+    "controlnet_name": "control_v11p_sd15_openpose.safetensors",
+    "controlnet_strength": 0.85,
+    "controlnet_start_percent": 0.0,
+    "controlnet_end_percent": 1.0
+  }
+}

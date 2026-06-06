@@ -86,7 +86,12 @@ def cmd_generate(args: argparse.Namespace) -> int:
 def cmd_workflow(args: argparse.Namespace) -> int:
     target = Path(args.output)
     target.parent.mkdir(parents=True, exist_ok=True)
-    filename = "comfyui_api_txt2img.json" if args.kind == "api" else "comfyui_workflow.json"
+    workflow_files = {
+        "visual": "comfyui_workflow.json",
+        "api": "comfyui_api_txt2img.json",
+        "lora-openpose": "comfyui_api_lora_openpose.json",
+    }
+    filename = workflow_files[args.kind]
     try:
         text = resources.files("id_preservation_cg.assets").joinpath(filename).read_text(encoding="utf-8")
     except (FileNotFoundError, ModuleNotFoundError):
@@ -151,7 +156,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     workflow = subparsers.add_parser("workflow", help="Copy the example ComfyUI workflow JSON")
     workflow.add_argument("--output", default="outputs/comfyui_workflow.json")
-    workflow.add_argument("--kind", choices=["visual", "api"], default="visual")
+    workflow.add_argument("--kind", choices=["visual", "api", "lora-openpose"], default="visual")
     workflow.set_defaults(func=cmd_workflow)
 
     comfyui_check = subparsers.add_parser("comfyui-check", help="Check whether a ComfyUI HTTP API server is reachable")

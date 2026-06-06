@@ -142,6 +142,13 @@ class ComfyUIBackend:
             "pose_image_upload": uploaded.get("pose_image", request.pose_image or ""),
             "fan_ref_upload": uploaded.get("fan_refs_0", request.fan_refs[0] if request.fan_refs else ""),
             "celebrity_ref_upload": uploaded.get("celebrity_refs_0", request.celebrity_refs[0] if request.celebrity_refs else ""),
+            "lora_name": request.model.lora_name,
+            "lora_strength_model": request.model.lora_strength_model,
+            "lora_strength_clip": request.model.lora_strength_clip,
+            "controlnet_name": request.model.controlnet_name,
+            "controlnet_strength": request.model.controlnet_strength,
+            "controlnet_start_percent": request.model.controlnet_start_percent,
+            "controlnet_end_percent": request.model.controlnet_end_percent,
         }
         return _replace_placeholders(workflow, variables), uploaded
 

@@ -178,6 +178,29 @@ ComfyUI 负责：
 
 当前已经跑通的是基础文生图。
 
+如果暂时不训练自己的 LoRA，可以先跑现成模块组合：
+
+```powershell
+idpcg generate --config examples\comfyui_lora_openpose_request.json
+```
+
+这个配置会调用：
+
+```text
+LCM LoRA
+OpenPose ControlNet
+SD1.5 checkpoint
+双人 OpenPose 姿态图
+```
+
+输出：
+
+```text
+outputs\comfyui_lora_openpose.png
+```
+
+这一步用于验证模块组合链路，不代表已经具备“指定真人 ID 保持”能力。
+
 要做真正的 ID 保持和动作控制，还需要逐步加：
 
 1. LoRA：把少量粉丝参考图训练成身份 adapter。

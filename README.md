@@ -316,11 +316,18 @@ idpcg workflow --output outputs/comfyui_workflow.json
 idpcg workflow --kind api --output outputs/comfyui_api_txt2img.json
 ```
 
+要导出 LoRA + OpenPose ControlNet 的现成模块组合 workflow：
+
+```bash
+idpcg workflow --kind lora-openpose --output outputs/comfyui_api_lora_openpose.json
+```
+
 模板源文件：
 
 ```text
 workflows/comfyui_workflow.json
 workflows/comfyui_api_txt2img.json
+workflows/comfyui_api_lora_openpose.json
 ```
 
 安装包内也包含同一份模板：
@@ -328,6 +335,49 @@ workflows/comfyui_api_txt2img.json
 ```text
 src/id_preservation_cg/assets/comfyui_workflow.json
 ```
+
+## 免训练现成模块流程
+
+如果暂时不训练自己的 ID LoRA，可以先用现成模块验证完整链路。本项目提供了一个示例配置：
+
+```text
+examples/comfyui_lora_openpose_request.json
+```
+
+它使用：
+
+```text
+基础模型: v1-5-pruned-emaonly.safetensors
+LoRA: lcm-lora-sdv1-5.safetensors
+ControlNet: control_v11p_sd15_openpose.safetensors
+姿态图: examples/assets/openpose_two_person.png
+Workflow: workflows/comfyui_api_lora_openpose.json
+```
+
+运行：
+
+```bash
+idpcg generate --config examples/comfyui_lora_openpose_request.json
+```
+
+输出：
+
+```text
+outputs/comfyui_lora_openpose.png
+outputs/comfyui_lora_openpose.manifest.json
+outputs/comfyui_lora_openpose.comfyui_payload.json
+outputs/comfyui_lora_openpose.comfyui_history.json
+```
+
+这一步的意义是验证：
+
+- 本项目可以组织 prompt 和控制器信息。
+- ComfyUI 可以加载现成 LoRA。
+- ComfyUI 可以加载现成 OpenPose ControlNet。
+- 姿态图可以通过 API 上传并接入 LoadImage。
+- 生成结果和完整记录可以保存下来。
+
+注意：这里的 LCM LoRA 是加速/采样风格 LoRA，不是人物身份 LoRA。后续把它替换成你自己训练的身份 LoRA，才是本项目真正的核心价值。
 
 ## Python API 使用
 

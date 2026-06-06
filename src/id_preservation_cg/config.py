@@ -34,6 +34,13 @@ class ModelConfig:
     cfg: float = 7.0
     sampler_name: str = "dpmpp_2m"
     scheduler: str = "karras"
+    lora_name: str = ""
+    lora_strength_model: float = 0.8
+    lora_strength_clip: float = 0.8
+    controlnet_name: str = ""
+    controlnet_strength: float = 0.85
+    controlnet_start_percent: float = 0.0
+    controlnet_end_percent: float = 1.0
 
 
 @dataclass
