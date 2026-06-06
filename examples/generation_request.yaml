@@ -1,0 +1,44 @@
+# =============================================================================
+# Mock 模式配置 — 跑通流程，不真出图
+#
+# 用法: uv run idpcg generate --config examples/generation_request.yaml
+# =============================================================================
+
+# ---- 输入：参考照片 ---------------------------------------------------------
+fan_refs:
+  - examples/assets/fan_01.jpg
+  - examples/assets/fan_02.jpg
+
+celebrity_refs:
+  - examples/assets/star_01.jpg
+
+pose_image: examples/assets/openpose.png
+
+# ---- 文本描述 ---------------------------------------------------------------
+prompt: "a fan and a famous singer taking a friendly red-carpet photo"
+
+negative_prompt: "low quality, blurry, distorted face, extra fingers, duplicated person"
+
+clothing_prompt: "fan wearing a silver jacket, celebrity wearing a black stage suit"
+
+scene_prompt: "cinematic red carpet, warm flash photography"
+
+# ---- 输出路径 ---------------------------------------------------------------
+output_path: outputs/config_result.svg
+
+# ---- 控制器开关 --------------------------------------------------------------
+# true = 启用, false = 跳过该控制器。强度范围 0.0 ~ 1.0
+controls:
+  use_lora: true
+  use_ip_adapter: true
+  use_controlnet: true
+  use_style_lora: true
+  ip_adapter_weight: 0.75
+  controlnet_weight: 0.85
+  style_weight: 0.55
+
+# ---- 后端与模型 --------------------------------------------------------------
+model:
+  backend: mock          # "mock" = 离线占位图, "comfyui" = 真出图
+  base_model: stabilityai/stable-diffusion-xl-base-1.0
+  seed: 42

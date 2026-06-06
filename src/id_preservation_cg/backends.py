@@ -149,6 +149,9 @@ class ComfyUIBackend:
             "controlnet_strength": request.model.controlnet_strength,
             "controlnet_start_percent": request.model.controlnet_start_percent,
             "controlnet_end_percent": request.model.controlnet_end_percent,
+            "ip_adapter_name": request.model.ip_adapter_name,
+            "ip_adapter_weight": request.model.ip_adapter_weight,
+            "clip_vision_name": request.model.clip_vision_name,
         }
         return _replace_placeholders(workflow, variables), uploaded
 

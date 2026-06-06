@@ -1,0 +1,67 @@
+# =============================================================================
+# 免训练现成模块流程 — LCM LoRA + OpenPose ControlNet
+#
+# 用途: 在训练自己的身份 LoRA 之前，先用现成模型验证完整链路是否通
+# 前提: ComfyUI 已启动，且以下模型已下载到 ComfyUI 模型目录:
+#   - models/checkpoints/v1-5-pruned-emaonly.safetensors
+#   - models/loras/lcm-lora-sdv1-5.safetensors
+#   - models/controlnet/control_v11p_sd15_openpose.safetensors
+#
+# 用法: uv run idpcg generate --config examples/comfyui_lora_openpose_request.yaml
+# =============================================================================
+
+# ---- 输入：参考照片 ---------------------------------------------------------
+fan_refs:
+  - examples/assets/fan_placeholder.jpg
+
+celebrity_refs:
+  - examples/assets/star_placeholder.jpg
+
+pose_image: examples/assets/openpose_two_person.png
+
+# ---- 文本描述 ---------------------------------------------------------------
+prompt: "two people standing together, friendly fan photo with a singer, realistic portrait, soft lighting, detailed faces"
+
+negative_prompt: "low quality, blurry, distorted face, bad anatomy, extra limbs, bad hands"
+
+clothing_prompt: "casual modern outfits"
+
+scene_prompt: "backstage hallway, warm light"
+
+# ---- 输出路径 ---------------------------------------------------------------
+output_path: outputs/comfyui_lora_openpose.png
+
+# ---- 控制器开关 --------------------------------------------------------------
+controls:
+  use_lora: true            # 用现成 LCM LoRA（加速采样，非身份 LoRA）
+  use_ip_adapter: false     # 不开 IP-Adapter
+  use_controlnet: true      # 用 OpenPose ControlNet 控姿态
+  use_style_lora: false
+  controlnet_weight: 0.85
+
+# ---- 后端与模型 --------------------------------------------------------------
+model:
+  backend: comfyui
+  base_model: v1-5-pruned-emaonly.safetensors
+  comfyui_url: http://127.0.0.1:8188
+  comfyui_workflow: workflows/comfyui_api_lora_openpose.json
+  submit_comfyui_job: true
+  download_comfyui_output: true
+
+  seed: 20260606
+  width: 512
+  height: 512
+  batch_size: 1
+  steps: 8                  # LCM 采样只需少量步数
+  cfg: 1.5                  # LCM 推荐的 CFG 较低
+  sampler_name: lcm
+  scheduler: simple
+
+  lora_name: lcm-lora-sdv1-5.safetensors
+  lora_strength_model: 0.8
+  lora_strength_clip: 0.8
+
+  controlnet_name: control_v11p_sd15_openpose.safetensors
+  controlnet_strength: 0.85
+  controlnet_start_percent: 0.0
+  controlnet_end_percent: 1.0

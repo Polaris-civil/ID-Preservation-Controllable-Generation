@@ -41,6 +41,9 @@ class ModelConfig:
     controlnet_strength: float = 0.85
     controlnet_start_percent: float = 0.0
     controlnet_end_percent: float = 1.0
+    ip_adapter_name: str = ""
+    ip_adapter_weight: float = 0.75
+    clip_vision_name: str = ""
 
 
 @dataclass

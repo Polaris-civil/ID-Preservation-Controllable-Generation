@@ -1,0 +1,92 @@
+# =============================================================================
+# 🆕 完全体配置 — LoRA + IP-Adapter + ControlNet 三合一
+#
+# 这是项目最完整的生成链路:
+#   LoRA          → 注入身份特征（你训练的人物 LoRA）
+#   IP-Adapter    → 锁定人脸结构（从参考图提取脸部特征）
+#   ControlNet    → 控制身体姿态（通过 OpenPose 骨骼图）
+#
+# 前提:
+#   1. ComfyUI 已启动 (http://127.0.0.1:8188)
+#   2. ComfyUI 已安装 IP-Adapter 插件 (ComfyUI_IPAdapter_plus)
+#   3. 以下模型已下载到 ComfyUI 对应目录:
+#      - checkpoints/v1-5-pruned-emaonly.safetensors
+#      - ipadapter/ip-adapter_sd15.safetensors
+#      - clip_vision/sd1.5_clip_vision.safetensors
+#      - controlnet/control_v11p_sd15_openpose.safetensors
+#      - loras/<你的身份 LoRA>.safetensors
+#
+# 用法: uv run idpcg generate --config examples/comfyui_full_pipeline_request.yaml
+# =============================================================================
+
+# ---- 输入：参考照片 ---------------------------------------------------------
+fan_refs:
+  - examples/assets/fan_placeholder.jpg     # 粉丝照片（用于 IP-Adapter 锁脸）
+
+celebrity_refs:
+  - examples/assets/star_placeholder.jpg    # 明星照片（用于 prompt 描述）
+
+pose_image: examples/assets/openpose_two_person.png   # OpenPose 骨骼图（控制两人站位）
+
+# ---- 文本描述 ---------------------------------------------------------------
+prompt: >-
+  two people standing together, a fan taking a photo with a famous singer,
+  realistic portrait, soft studio lighting, detailed faces, natural skin texture
+
+negative_prompt: >-
+  low quality, blurry, distorted face, bad anatomy, extra limbs, bad hands,
+  ugly, deformed, watermark, text
+
+clothing_prompt: >-
+  fan wearing casual modern outfit, celebrity wearing elegant stage outfit
+
+scene_prompt: >-
+  warm indoor studio, professional photography lighting, shallow depth of field
+
+# ---- 输出路径 ---------------------------------------------------------------
+output_path: outputs/full_pipeline_result.png
+
+# ---- 控制器开关 --------------------------------------------------------------
+# IP-Adapter 和 ControlNet 的强度建议从 0.7~0.85 开始调
+controls:
+  use_lora: true
+  use_ip_adapter: true       # 🔒 锁脸 — 保持粉丝身份一致
+  use_controlnet: true       # 🦴 控姿 — 通过骨骼图控制动作站位
+  use_style_lora: false      # 🎨 风格 — 等前面都调好再开
+  ip_adapter_weight: 0.75
+  controlnet_weight: 0.85
+  style_weight: 0.55
+
+# ---- 后端与模型 --------------------------------------------------------------
+model:
+  backend: comfyui
+  base_model: v1-5-pruned-emaonly.safetensors
+  comfyui_url: http://127.0.0.1:8188
+  comfyui_workflow: workflows/comfyui_api_full_pipeline.json
+  submit_comfyui_job: true
+  download_comfyui_output: true
+
+  seed: 42
+  width: 512
+  height: 512
+  batch_size: 1
+  steps: 25
+  cfg: 7.0
+  sampler_name: dpmpp_2m
+  scheduler: karras
+
+  # ---- LoRA（身份特征）------------------
+  lora_name: ""                       # 填你自己训练的身份 LoRA 文件名
+  lora_strength_model: 0.8
+  lora_strength_clip: 0.8
+
+  # ---- ControlNet（姿态控制）------------
+  controlnet_name: control_v11p_sd15_openpose.safetensors
+  controlnet_strength: 0.85
+  controlnet_start_percent: 0.0
+  controlnet_end_percent: 1.0
+
+  # ---- IP-Adapter（人脸一致）------------
+  ip_adapter_name: ip-adapter_sd15.safetensors
+  ip_adapter_weight: 0.75
+  clip_vision_name: sd1.5_clip_vision.safetensors

@@ -114,7 +114,7 @@ scheduler: karras
 项目里已经有配置文件：
 
 ```text
-examples/comfyui_request.json
+examples/comfyui_request.yaml
 ```
 
 先确认里面这些字段：
@@ -137,7 +137,7 @@ examples/comfyui_request.json
 
 ```powershell
 cd E:\trae\AIGC_github\ID-Preservation-Controllable-Generation
-uv run idpcg generate --config examples\comfyui_request.json
+uv run idpcg generate --config examples\comfyui_request.yaml
 ```
 
 输出会在：
@@ -181,7 +181,7 @@ ComfyUI 负责：
 如果暂时不训练自己的 LoRA，可以先跑现成模块组合：
 
 ```powershell
-uv run idpcg generate --config examples\comfyui_lora_openpose_request.json
+uv run idpcg generate --config examples\comfyui_lora_openpose_request.yaml
 ```
 
 这个配置会调用：

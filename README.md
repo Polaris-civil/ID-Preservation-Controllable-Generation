@@ -1,6 +1,11 @@
 # ID-Preservation Controllable Generation
 
-一个面向“人物 ID 保持 + 可控生成”的文生图项目骨架，目标场景是生成粉丝与明星的高一致性合照：粉丝身份特征稳定，明星脸部结构一致，同时支持控制动作、服装和场景。
+[![CI](https://github.com/CodexTesla/ID-Preservation-Controllable-Generation/actions/workflows/ci.yml/badge.svg)](https://github.com/CodexTesla/ID-Preservation-Controllable-Generation/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/Python-3.9_%7C_3.10_%7C_3.12-blue?logo=python)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-Apache_2.0-green.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+[![uv](https://img.shields.io/badge/build-uv-724d97?logo=astral)](https://docs.astral.sh/uv/)
+
+一个面向”人物 ID 保持 + 可控生成”的文生图项目骨架，目标场景是生成粉丝与明星的高一致性合照：粉丝身份特征稳定，明星脸部结构一致，同时支持控制动作、服装和场景。
 
 本仓库不是单个脚本，而是一个完整可安装的 Python 项目。它包含离线 mock 后端、命令行工具、Python API、LoRA 训练清单生成器、ComfyUI 工作流模板、测试、CI，以及真实模型接入说明。
 
@@ -193,19 +198,17 @@ outputs/result.manifest.json
 
 ### 4. 用配置文件生成
 
-推荐使用配置文件管理复杂参数：
+推荐使用 **YAML** 格式的配置文件（支持注释，易读易改）。项目也兼容 JSON 格式。
 
 ```bash
-uv run idpcg generate --config examples/generation_request.json
+# YAML 格式（推荐 — 有注释，可读性好）
+uv run idpcg generate --config examples/generation_request.yaml
+
+# JSON 格式（也支持）
+uv run idpcg generate --config examples/generation_request.yaml
 ```
 
-配置示例在：
-
-```text
-examples/generation_request.json
-```
-
-它包含：
+配置文件包含以下内容：
 
 - 粉丝参考图路径。
 - 明星参考图路径。
@@ -215,12 +218,14 @@ examples/generation_request.json
 - LoRA、IP-Adapter、ControlNet、Style LoRA 开关。
 - 后端配置。
 
+> **小提示：** `examples/` 里的 `.yaml` 是**项目配置文件**（CLI 读取），`workflows/` 里的 `.json` 是 **ComfyUI 工作流**（ComfyUI 读取）。用后缀就能一眼区分，不会搞混。
+
 ### 5. 生成 ComfyUI payload
 
 如果你要接入 ComfyUI，可以先生成真正的 ComfyUI API payload，而不提交任务：
 
 ```bash
-uv run idpcg generate --config examples/comfyui_request.json
+uv run idpcg generate --config examples/comfyui_request.yaml
 ```
 
 输出类似：
@@ -257,7 +262,7 @@ uv run idpcg comfyui-check --url http://127.0.0.1:8188
 然后运行：
 
 ```bash
-uv run idpcg generate --config examples/comfyui_request.json
+uv run idpcg generate --config examples/comfyui_request.yaml
 ```
 
 后端会执行：
@@ -284,7 +289,7 @@ workflows/comfyui_api_txt2img.json
 - `VAEDecode`
 - `SaveImage`
 
-如果你要启用 IP-Adapter、ControlNet、LoRA 等扩展节点，需要从 ComfyUI 导出 API 格式 workflow，然后在 `examples/comfyui_request.json` 中把 `comfyui_workflow` 指向你的自定义 JSON。自定义 workflow 可以使用这些占位符：
+如果你要启用 IP-Adapter、ControlNet、LoRA 等扩展节点，需要从 ComfyUI 导出 API 格式 workflow，然后在 `examples/comfyui_request.yaml` 中把 `comfyui_workflow` 指向你的自定义 JSON。自定义 workflow 可以使用这些占位符：
 
 ```text
 {{checkpoint}}
@@ -341,7 +346,7 @@ src/id_preservation_cg/assets/comfyui_workflow.json
 如果暂时不训练自己的 ID LoRA，可以先用现成模块验证完整链路。本项目提供了一个示例配置：
 
 ```text
-examples/comfyui_lora_openpose_request.json
+examples/comfyui_lora_openpose_request.yaml
 ```
 
 它使用：
@@ -357,7 +362,7 @@ Workflow: workflows/comfyui_api_lora_openpose.json
 运行：
 
 ```bash
-uv run idpcg generate --config examples/comfyui_lora_openpose_request.json
+uv run idpcg generate --config examples/comfyui_lora_openpose_request.yaml
 ```
 
 输出：
@@ -407,34 +412,114 @@ print(result["manifest"])
 
 ## 目录结构
 
+### 整体概览
+
 ```text
-src/id_preservation_cg/
-  backends.py       生成后端：mock SVG、ComfyUI payload
-  cli.py            命令行入口
-  config.py         配置 dataclass、JSON/YAML 加载
-  controllers.py    IP-Adapter、ControlNet、Style 控制器抽象
-  dataset.py        caption 构建、Prompt Dropout、标签扰动
-  lora.py           LoRA 小样本训练门面
-  pipeline.py       端到端生成编排
-  semantic.py       多模态语义重构与四类标签解耦
-  tagging.py        WD14-like Tagger 接口
-  validation.py     输入配置校验
-
-examples/
-  run_demo.py
-  generation_request.json
-  comfyui_request.json
-
-workflows/
-  comfyui_workflow.json
-
-docs/
-  REAL_BACKEND.md
-  SAFETY.md
-
-tests/
-  test_*.py
+ID-Preservation-Controllable-Generation/
+├── src/id_preservation_cg/    ← 🧠 核心代码（Python 包）
+├── examples/                  ← 📋 示例配置文件 + 示例脚本 + 示例素材
+├── workflows/                 ← 🔧 ComfyUI 工作流模板（可拖进 ComfyUI）
+├── outputs/                   ← 🖼️ 生成结果输出
+├── scripts/                   ← ⚡ PowerShell 辅助脚本
+├── tests/                     ← 🧪 单元测试
+├── docs/                      ← 📖 补充文档
+├── pyproject.toml             ← 📦 项目元信息与依赖声明
+└── README.md                  ← 📄 你正在读的文件
 ```
+
+### 🧠 `src/id_preservation_cg/` — 核心大脑
+
+整个项目的 Python 包。每一个模块各司其职：
+
+| 文件 | 一句话 | 管什么 |
+|------|--------|--------|
+| `tagging.py` | **图像打标器** | 从照片里提取原始标签（黑头发、圆脸、站姿、红背景…）。目前是模拟版，可替换为真实 WD14 模型 |
+| `semantic.py` | **语义解耦器** | 把原始标签拆成四类：**身份 / 姿态 / 服装 / 背景**。这就是项目的核心创意——不让它们混在一起学 |
+| `lora.py` | **LoRA 训练门面** | 管理身份 LoRA 的小样本训练流程。目前生成占位模型文件，真训练时接入 Diffusers 或 Accelerate |
+| `dataset.py` | **数据集构建** | LoRA 训练时构建 caption 数据集，内置 Prompt Dropout 和标签扰动来防过拟合 |
+| `controllers.py` | **控制器栈** | 三个可独立开关的控制器：IP-Adapter（锁脸）、ControlNet（控姿势）、Style（控风格），每个都能调强度 |
+| `config.py` | **配置中心** | 所有参数的数据结构（`GenerationRequest`、`ModelConfig`、`ControlConfig`）。JSON 配置文件最终反序列化到这里 |
+| `pipeline.py` | **总流程编排** | 把打标 → 解耦 → 加载控制器 → 后端生成串成一条端到端流水线 |
+| `backends.py` | **生成后端** | 两种模式：Mock 后端生成占位 SVG 图；ComfyUI 后端提交 API 任务真出图，支持上传参考图、轮询结果、下载输出 |
+| `cli.py` | **命令行入口** | `idpcg tag`、`idpcg generate`、`idpcg train-lora`、`idpcg workflow` 等命令都在这里定义 |
+| `validation.py` | **输入校验** | 检查请求参数是否合法（路径、开关冲突、数值范围等） |
+| `assets/` | **内置资源** | 随包分发的工作流模板副本，与 `workflows/` 目录内容同步 |
+
+### 📋 `examples/` — 示例配置与素材
+
+> **注意：`examples/` 里的文件和 `workflows/` 里的文件是两种完全不同的东西！**
+>
+> | | `examples/*.yaml` / `examples/*.json` | `workflows/*.json` |
+> |---|---|---|
+> | **是什么** | 📋 项目配置文件（YAML 或 JSON） | 🔧 ComfyUI 工作流（ComfyUI 原生 API 格式） |
+> | **能拖进 ComfyUI 吗** | ❌ 不能，ComfyUI 不认识 | ✅ 能，直接拖就显示节点图 |
+> | **内容是什么** | 用哪张照片、写什么提示词、开哪些控制器 | 节点怎么连：Checkpoint→LoRA→ControlNet→KSampler→VAE |
+> | **谁来读** | 项目的 CLI（`idpcg generate --config xxx.yaml`） | ComfyUI 画布 / ComfyUI API |
+>
+> 一句话：**配置文件告诉项目"画什么"，工作流告诉 ComfyUI"怎么画"。**
+>
+> **推荐用 `.yaml` 格式**作为配置文件——支持注释，层级靠缩进一目了然。后缀就能区分：`.yaml` = 项目配置，`.json` = ComfyUI 工作流。
+
+| 文件 | 干什么 |
+|------|--------|
+| `run_demo.py` | 一键 Demo 脚本，跑通完整 mock 流程 |
+| `generation_request.yaml` | Mock 模式配置——后端 `mock`，生成占位 SVG 快速验证 |
+| `comfyui_request.yaml` | ComfyUI 基础配置——txt2img 工作流 |
+| `comfyui_lora_openpose_request.yaml` | LoRA + ControlNet 组合——免训练验证多控制器链路 |
+| `comfyui_full_pipeline_request.yaml` | 🆕 完全体——LoRA + IP-Adapter + ControlNet 三合一 |
+| `assets/` 子目录 | 示例素材图片（fan_01.jpg、star_01.jpg、openpose.png 等） |
+
+### 🔧 `workflows/` — ComfyUI 工作流模板
+
+每个 JSON 文件描述一个 ComfyUI 画布上的节点图。可以直接拖进 ComfyUI 界面查看和编辑。
+
+| 文件 | 复杂度 | 包含的节点 |
+|------|--------|-----------|
+| `comfyui_workflow.json` | ⭐ | 可视化模板，给人看的参考图，不可提交 API |
+| `comfyui_api_txt2img.json` | ⭐⭐ | 最简文生图：加载模型 → 写 prompt → 出图（仅 ComfyUI 原生节点） |
+| `comfyui_api_lora_openpose.json` | ⭐⭐⭐ | LoRA + ControlNet：模型加载 → LoRA 注入 → 骨骼图控姿势 → 出图 |
+| `comfyui_api_full_pipeline.json` | ⭐⭐⭐⭐⭐ | 🆕 全家桶：LoRA + IP-Adapter（锁脸）+ ControlNet（控姿势）→ 出图 |
+
+层级演进关系：
+
+```text
+comfyui_api_txt2img.json          ← 地基（就一个文生图）
+        ↓ 加 LoRA + ControlNet
+comfyui_api_lora_openpose.json    ← 进阶（能控姿势了）
+        ↓ 再加 IP-Adapter
+comfyui_api_full_pipeline.json    ← 完全体（脸也锁住了）
+```
+
+工作流使用 ComfyUI API 格式，节点中使用 `{{placeholder}}` 占位符。运行 `idpcg generate` 时，后端会自动将占位符替换为配置中的实际值（prompt、seed、checkpoint 名称、上传后的图片路径等）。
+
+### 🖼️ `outputs/` — 输出目录
+
+每次运行生成任务，产物都放在这里：
+
+| 后缀 | 是什么 |
+|------|--------|
+| `.svg` | Mock 模式生成的占位示意图（不是真照片，仅用于验证流程） |
+| `.png` | ComfyUI 真出图的实际图片 |
+| `.manifest.json` | **运行全记录**：输入参数、解耦后的标签、使用的控制器、后端信息、输出路径 |
+| `.comfyui_payload.json` | 发送给 ComfyUI `/prompt` 接口的完整请求体（可审计、可复现） |
+| `.comfyui_response.json` | ComfyUI 返回的原始响应（含 prompt_id） |
+| `.comfyui_history.json` | ComfyUI 生成完成后的历史记录（含输出文件名，用于下载图片） |
+
+### ⚡ `scripts/` — PowerShell 辅助脚本
+
+| 脚本 | 一句话 |
+|------|--------|
+| `start_comfyui.ps1` | 启动本仓库同级目录下的 ComfyUI（自动定位 `../ComfyUI/main.py`） |
+| `stop_comfyui.ps1` | 关闭 ComfyUI 后台进程 |
+| `create_demo_refs.ps1` | 创建演示用的参考图素材 |
+
+### 🧪 其余目录
+
+| 目录 | 内容 |
+|------|------|
+| `tests/` | 单元测试，运行 `uv run python -m unittest discover -s tests` 执行（目前 11 个测试） |
+| `docs/` | 补充文档：《接入真实模型指南》《安全注意事项》《ComfyUI 新手教程》 |
+| `pyproject.toml` | Python 项目的"身份证"：名称、版本、依赖声明、CLI 入口点 |
 
 ## 接入真实模型的建议路径
 
@@ -530,8 +615,8 @@ uv run python -m unittest discover -s tests
 
 ```bash
 uv run python examples/run_demo.py
-uv run idpcg generate --config examples/generation_request.json
-uv run idpcg generate --config examples/comfyui_request.json
+uv run idpcg generate --config examples/generation_request.yaml
+uv run idpcg generate --config examples/comfyui_request.yaml
 ```
 
 ## 注意事项

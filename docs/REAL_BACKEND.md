@@ -44,7 +44,7 @@ or fixed background details.
 Use `ModelConfig.backend = "comfyui"` to write a real ComfyUI API payload:
 
 ```bash
-idpcg generate --config examples/comfyui_request.json
+idpcg generate --config examples/comfyui_request.yaml
 ```
 
 Set `submit_comfyui_job` to `true` only after confirming your local workflow

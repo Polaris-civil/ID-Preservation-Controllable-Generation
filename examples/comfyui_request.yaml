@@ -1,0 +1,62 @@
+# =============================================================================
+# ComfyUI 文生图配置 — 最简模式，只做 txt2img
+#
+# 前提: ComfyUI 已启动 (http://127.0.0.1:8188)
+# 用法: uv run idpcg generate --config examples/comfyui_request.yaml
+#
+# 注意: submit_comfyui_job 默认是 false，确认 ComfyUI 正常后再改为 true
+# =============================================================================
+
+# ---- 输入：参考照片 ---------------------------------------------------------
+fan_refs:
+  - datasets/fan_identity/fan_01.png
+  - datasets/fan_identity/fan_02.png
+
+celebrity_refs:
+  - datasets/celebrity/star_01.png
+
+pose_image: datasets/poses/two_person_openpose.png
+
+# ---- 文本描述 ---------------------------------------------------------------
+prompt: "a fan and a famous singer taking a natural full-body photo together"
+
+negative_prompt: "low quality, deformed hands, face swap artifacts, identity drift"
+
+clothing_prompt: "coordinated concert outfits with realistic fabric texture"
+
+scene_prompt: "backstage hallway, realistic camera flash, coherent shadows"
+
+# ---- 输出路径 ---------------------------------------------------------------
+output_path: outputs/comfyui_result.png
+
+# ---- 控制器开关 --------------------------------------------------------------
+controls:
+  use_lora: true
+  use_ip_adapter: true
+  use_controlnet: true
+  use_style_lora: false
+
+# ---- 后端与模型 --------------------------------------------------------------
+model:
+  backend: comfyui
+  base_model: v1-5-pruned-emaonly.safetensors     # SD 1.5，适合 RTX 4060 8GB
+  comfyui_url: http://127.0.0.1:8188
+  comfyui_workflow: workflows/comfyui_api_txt2img.json
+
+  # 改为 true 后才会真正提交 ComfyUI 任务
+  submit_comfyui_job: false
+  download_comfyui_output: true
+
+  # 生成参数
+  seed: 1234
+  width: 512
+  height: 512
+  batch_size: 1
+  steps: 25
+  cfg: 7.0
+  sampler_name: dpmpp_2m
+  scheduler: karras
+
+  # 超时与轮询
+  comfyui_timeout: 600
+  comfyui_poll_interval: 1.0
