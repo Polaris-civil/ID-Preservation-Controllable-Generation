@@ -111,13 +111,7 @@ outputs/demo_result.manifest.json
 
 ## 本机 ComfyUI 启动方式
 
-如果 ComfyUI 安装在本仓库同级目录：
-
-```text
-E:\trae\AIGC_github\ComfyUI
-```
-
-可以在本项目目录中启动：
+如果 ComfyUI 安装在本仓库同级目录（即 `../ComfyUI`），可以通过项目脚本启动：
 
 ```powershell
 .\scripts\start_comfyui.ps1
@@ -203,9 +197,6 @@ outputs/result.manifest.json
 ```bash
 # YAML 格式（推荐 — 有注释，可读性好）
 uv run idpcg generate --config examples/generation_request.yaml
-
-# JSON 格式（也支持）
-uv run idpcg generate --config examples/generation_request.yaml
 ```
 
 配置文件包含以下内容：
@@ -237,7 +228,7 @@ outputs/comfyui_result.comfyui_payload.json
 
 `outputs/comfyui_result.comfyui_payload.json` 是可提交给 ComfyUI `/prompt` 接口的 API graph，不是说明型占位 JSON。
 
-默认 `submit_comfyui_job` 是 `false`。确认本地 ComfyUI 已启动，且 checkpoint 名称存在后，再在配置里改为：
+默认 `submit_comfyui_job` 是 `false`。确认本地 ComfyUI 已启动，且 checkpoint 名称存在后，再在配置里改为 `true`。
 
 先检查 ComfyUI 服务是否在线：
 
@@ -245,21 +236,17 @@ outputs/comfyui_result.comfyui_payload.json
 uv run idpcg comfyui-check --url http://127.0.0.1:8188
 ```
 
-```json
-"submit_comfyui_job": true
+显存较小的显卡建议先用 SD1.5 512x512，参数参考如下：
+
+```yaml
+base_model: "v1-5-pruned-emaonly.safetensors"
+width: 512
+height: 512
+steps: 25
+cfg: 7.0
 ```
 
-对于你当前电脑上的 RTX 4060 8GB，建议先用 SD1.5 512x512：
-
-```json
-"base_model": "v1-5-pruned-emaonly.safetensors",
-"width": 512,
-"height": 512,
-"steps": 25,
-"cfg": 7.0
-```
-
-然后运行：
+确认无误后运行：
 
 ```bash
 uv run idpcg generate --config examples/comfyui_request.yaml

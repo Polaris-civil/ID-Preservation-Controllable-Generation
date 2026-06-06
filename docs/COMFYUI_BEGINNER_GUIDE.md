@@ -2,41 +2,21 @@
 
 这份文档面向第一次使用 ComfyUI 的用户，目标是先跑通基础出图，再理解如何让本项目通过 API 调用 ComfyUI。
 
-## 1. 你当前已经具备的环境
+## 1. 环境准备
 
-ComfyUI 安装位置：
+你需要在本机安装 ComfyUI。推荐放在本项目的同级目录（即 `../ComfyUI`），这样项目脚本可以自动定位。
 
-```text
-E:\trae\AIGC_github\ComfyUI
-```
+ComfyUI 下载地址：<https://github.com/comfyanonymous/ComfyUI>
 
-本项目位置：
-
-```text
-E:\trae\AIGC_github\ID-Preservation-Controllable-Generation
-```
-
-ComfyUI 地址：
+启动后浏览器访问：
 
 ```text
 http://127.0.0.1:8188
 ```
 
-已下载模型：
-
-```text
-E:\trae\AIGC_github\ComfyUI\models\checkpoints\v1-5-pruned-emaonly.safetensors
-```
-
-这个模型是 SD1.5，适合 RTX 4060 8GB 先练手。
+下载至少一个 SD1.5 checkpoint（如 `v1-5-pruned-emaonly.safetensors`），放到 ComfyUI 的 `models/checkpoints/` 目录下。
 
 ## 2. 启动和停止 ComfyUI
-
-在 PowerShell 中进入项目目录：
-
-```powershell
-cd E:\trae\AIGC_github\ID-Preservation-Controllable-Generation
-```
 
 启动：
 
@@ -50,7 +30,7 @@ cd E:\trae\AIGC_github\ID-Preservation-Controllable-Generation
 .\scripts\stop_comfyui.ps1
 ```
 
-检查 API：
+检查 API 是否就绪：
 
 ```powershell
 uv run idpcg comfyui-check --url http://127.0.0.1:8188
@@ -60,112 +40,82 @@ uv run idpcg comfyui-check --url http://127.0.0.1:8188
 
 ## 3. 在 ComfyUI 页面手动出第一张图
 
-打开：
+打开 `http://127.0.0.1:8188`，你会看到：
 
-```text
-http://127.0.0.1:8188
-```
-
-页面上你会看到：
-
-- 左侧：资产、节点库、模型库、工作流、模板。
+- 左侧：节点库、模型库、工作流模板。
 - 中间：节点画布。
-- 右侧或浮动区域：运行按钮、任务队列。
+- 右侧：运行按钮、任务队列。
 
-新手建议使用模板：
+新手建议：
 
-1. 点击左侧 `模板`。
-2. 找一个基础文生图或 SD1.5 文生图模板。
-3. 加载模板后，确认 Checkpoint 节点选择：
-
-```text
-v1-5-pruned-emaonly.safetensors
-```
-
-4. 找到正向 prompt 文本框，填：
-
-```text
-two people smiling backstage, realistic portrait, soft light, high quality
-```
-
-5. 找到反向 prompt 文本框，填：
-
-```text
-low quality, blurry, distorted face, bad anatomy
-```
-
-6. 参数建议：
-
-```text
-width: 512
-height: 512
-steps: 20-25
-cfg: 7
-batch size: 1
-sampler: dpmpp_2m
-scheduler: karras
-```
-
-7. 点击 `运行`。
-8. 等待右侧任务完成，输出图会显示在 SaveImage 或预览节点里。
+1. 点击左侧模板，选一个基础文生图模板。
+2. 确认 Checkpoint 节点选择了正确的模型（如 `v1-5-pruned-emaonly.safetensors`）。
+3. 在正向 prompt 文本框填：
+   ```
+   two people smiling backstage, realistic portrait, soft light, high quality
+   ```
+4. 在反向 prompt 文本框填：
+   ```
+   low quality, blurry, distorted face, bad anatomy
+   ```
+5. 参数建议：
+   ```
+   width: 512
+   height: 512
+   steps: 20-25
+   cfg: 7
+   batch size: 1
+   sampler: dpmpp_2m
+   scheduler: karras
+   ```
+6. 点击运行，等待任务完成。
 
 ## 4. 用本项目调用 ComfyUI 出图
 
-项目里已经有配置文件：
+配置文件：
 
 ```text
 examples/comfyui_request.yaml
 ```
 
-先确认里面这些字段：
+确认关键字段：
 
-```json
-{
-  "model": {
-    "backend": "comfyui",
-    "base_model": "v1-5-pruned-emaonly.safetensors",
-    "comfyui_url": "http://127.0.0.1:8188",
-    "submit_comfyui_job": true,
-    "width": 512,
-    "height": 512,
-    "steps": 25
-  }
-}
+```yaml
+model:
+  backend: comfyui
+  base_model: "v1-5-pruned-emaonly.safetensors"  # 与 ComfyUI 中显示的文件名一致
+  comfyui_url: "http://127.0.0.1:8188"
+  submit_comfyui_job: true    # 改为 true 才会真正提交任务
+  width: 512
+  height: 512
+  steps: 25
 ```
 
 运行：
 
-```powershell
-cd E:\trae\AIGC_github\ID-Preservation-Controllable-Generation
-uv run idpcg generate --config examples\comfyui_request.yaml
+```bash
+uv run idpcg generate --config examples/comfyui_request.yaml
 ```
 
-输出会在：
+输出文件：
 
 ```text
-outputs\comfyui_result.png
-outputs\comfyui_result.manifest.json
-outputs\comfyui_result.comfyui_payload.json
-outputs\comfyui_result.comfyui_history.json
+outputs/comfyui_result.png               ← 生成图
+outputs/comfyui_result.manifest.json     ← 本项目记录的完整生成信息
+outputs/comfyui_result.comfyui_payload.json   ← 提交给 ComfyUI 的 API workflow
+outputs/comfyui_result.comfyui_history.json   ← ComfyUI 返回的任务历史
 ```
-
-其中：
-
-- `.png` 是生成图。
-- `.manifest.json` 是本项目记录的完整生成信息。
-- `.comfyui_payload.json` 是提交给 ComfyUI 的 API workflow。
-- `.comfyui_history.json` 是 ComfyUI 返回的任务历史。
 
 ## 5. ComfyUI 和本项目分别负责什么
 
-ComfyUI 负责：
+**ComfyUI 负责：**
 
 - 加载 checkpoint。
 - 执行采样。
 - 管理节点工作流。
 - 生成图片。
 
-本项目负责：
+**本项目负责：**
 
 - 从参考图生成标签。
 - 将标签拆成 ID、姿态、服装、背景。
@@ -176,53 +126,45 @@ ComfyUI 负责：
 
 ## 6. 下一步：ID 保持与可控生成
 
-当前已经跑通的是基础文生图。
+当前跑通的是基础文生图。如果暂时不训练自己的 LoRA，可以先跑现成模块组合：
 
-如果暂时不训练自己的 LoRA，可以先跑现成模块组合：
-
-```powershell
-uv run idpcg generate --config examples\comfyui_lora_openpose_request.yaml
+```bash
+uv run idpcg generate --config examples/comfyui_lora_openpose_request.yaml
 ```
 
-这个配置会调用：
+这个配置会用到：
 
-```text
-LCM LoRA
-OpenPose ControlNet
-SD1.5 checkpoint
-双人 OpenPose 姿态图
-```
+- LCM LoRA（加速采样）
+- OpenPose ControlNet（控制姿态）
+- SD1.5 checkpoint
+- 双人 OpenPose 姿态图
 
-输出：
+输出：`outputs/comfyui_lora_openpose.png`
 
-```text
-outputs\comfyui_lora_openpose.png
-```
-
-这一步用于验证模块组合链路，不代表已经具备“指定真人 ID 保持”能力。
+这一步用于验证模块组合链路，不代表已经具备"指定真人 ID 保持"能力。
 
 要做真正的 ID 保持和动作控制，还需要逐步加：
 
-1. LoRA：把少量粉丝参考图训练成身份 adapter。
-2. IP-Adapter：用参考图约束人脸结构。
-3. ControlNet OpenPose：用姿态图控制合照动作。
-4. 自定义 ComfyUI API workflow：把 LoRA、IP-Adapter、ControlNet 节点接进工作流。
+1. **LoRA**：把少量粉丝参考图训练成身份 adapter。
+2. **IP-Adapter**：用参考图约束人脸结构。
+3. **ControlNet OpenPose**：用姿态图控制合照动作。
+4. **自定义 ComfyUI API workflow**：把 LoRA、IP-Adapter、ControlNet 节点接进工作流。
 
 建议顺序：
 
 ```text
 基础 txt2img 出图
-  -> 加 LoRA
-  -> 加 OpenPose ControlNet
-  -> 加 IP-Adapter
-  -> 接入本项目自动生成 prompt 与 API 调用
+  → 加 LoRA
+  → 加 OpenPose ControlNet
+  → 加 IP-Adapter
+  → 接入本项目自动生成 prompt 与 API 调用
 ```
 
-不要一开始就同时上 LoRA、IP-Adapter、ControlNet。先保证每一步单独能出图，再组合。
+不要一开始就同时上所有模块。先保证每一步单独能出图，再组合。
 
-## 7. RTX 4060 8GB 推荐参数
+## 7. 显卡与参数建议
 
-SD1.5：
+**入门（SD1.5）：**
 
 ```text
 512x512
@@ -230,19 +172,19 @@ batch size 1
 steps 20-30
 ```
 
-SDXL：
+**进阶（SDXL）：**
 
 ```text
-1024x1024 可以尝试
+1024x1024 可尝试
 batch size 1
-必要时降低到 768x768 或开启低显存策略
+必要时降到 768x768 或开启低显存策略
 ```
 
-多控制器组合：
+**多控制器组合：**
 
 ```text
 SD1.5 + LoRA + ControlNet + IP-Adapter 更稳
-SDXL + 多控制器可能显存紧张
+SDXL + 多控制器显存压力较大，需逐项测试
 ```
 
 ## 8. 常见问题
@@ -263,17 +205,11 @@ uv run idpcg comfyui-check --url http://127.0.0.1:8188
 
 ### 提示找不到 checkpoint
 
-确认模型文件在：
-
-```text
-E:\trae\AIGC_github\ComfyUI\models\checkpoints
-```
-
-并且配置里的 `base_model` 与文件名完全一致。
+确认模型文件在 ComfyUI 的 `models/checkpoints/` 目录下，并且配置里的 `base_model` 与文件名完全一致（包括 `.safetensors` 后缀）。
 
 ### 显存不够
 
-先改小：
+先降低参数：
 
 ```text
 width: 512
@@ -282,4 +218,4 @@ batch_size: 1
 steps: 20
 ```
 
-并关闭浏览器、PPT、Word、聊天软件等占显存程序。
+并关闭浏览器、聊天软件等占显存程序。

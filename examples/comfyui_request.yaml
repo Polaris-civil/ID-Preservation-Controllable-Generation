@@ -39,7 +39,7 @@ controls:
 # ---- 后端与模型 --------------------------------------------------------------
 model:
   backend: comfyui
-  base_model: v1-5-pruned-emaonly.safetensors     # SD 1.5，适合 RTX 4060 8GB
+  base_model: v1-5-pruned-emaonly.safetensors     # SD 1.5，显存友好，入门首选
   comfyui_url: http://127.0.0.1:8188
   comfyui_workflow: workflows/comfyui_api_txt2img.json
 
