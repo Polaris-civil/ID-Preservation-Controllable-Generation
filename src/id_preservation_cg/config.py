@@ -27,6 +27,13 @@ class ModelConfig:
     download_comfyui_output: bool = True
     comfyui_timeout: int = 600
     comfyui_poll_interval: float = 1.0
+    width: int = 512
+    height: int = 512
+    batch_size: int = 1
+    steps: int = 25
+    cfg: float = 7.0
+    sampler_name: str = "dpmpp_2m"
+    scheduler: str = "karras"
 
 
 @dataclass

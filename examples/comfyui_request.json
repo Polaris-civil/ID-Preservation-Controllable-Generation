@@ -20,13 +20,20 @@
   },
   "model": {
     "backend": "comfyui",
-    "base_model": "sd_xl_base_1.0.safetensors",
+    "base_model": "v1-5-pruned-emaonly.safetensors",
     "comfyui_url": "http://127.0.0.1:8188",
     "comfyui_workflow": "workflows/comfyui_api_txt2img.json",
     "submit_comfyui_job": false,
     "download_comfyui_output": true,
     "comfyui_timeout": 600,
     "comfyui_poll_interval": 1.0,
-    "seed": 1234
+    "seed": 1234,
+    "width": 512,
+    "height": 512,
+    "batch_size": 1,
+    "steps": 25,
+    "cfg": 7.0,
+    "sampler_name": "dpmpp_2m",
+    "scheduler": "karras"
   }
 }

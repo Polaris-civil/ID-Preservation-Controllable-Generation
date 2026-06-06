@@ -104,6 +104,38 @@ outputs/demo_result.manifest.json
 - `demo_result.manifest.json` 记录完整请求、prompt、解耦标签、控制器配置和后端信息。
 - 默认不需要真实图片；示例路径即使不存在，也可以跑通流程。
 
+## 本机 ComfyUI 启动方式
+
+如果 ComfyUI 安装在本仓库同级目录：
+
+```text
+E:\trae\AIGC_github\ComfyUI
+```
+
+可以在本项目目录中启动：
+
+```powershell
+.\scripts\start_comfyui.ps1
+```
+
+停止：
+
+```powershell
+.\scripts\stop_comfyui.ps1
+```
+
+浏览器打开：
+
+```text
+http://127.0.0.1:8188
+```
+
+检查 API：
+
+```bash
+idpcg comfyui-check --url http://127.0.0.1:8188
+```
+
 ## 命令行使用
 
 ### 1. 提取并解耦标签
@@ -210,6 +242,16 @@ idpcg comfyui-check --url http://127.0.0.1:8188
 
 ```json
 "submit_comfyui_job": true
+```
+
+对于你当前电脑上的 RTX 4060 8GB，建议先用 SD1.5 512x512：
+
+```json
+"base_model": "v1-5-pruned-emaonly.safetensors",
+"width": 512,
+"height": 512,
+"steps": 25,
+"cfg": 7.0
 ```
 
 然后运行：
