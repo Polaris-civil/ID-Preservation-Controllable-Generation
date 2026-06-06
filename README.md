@@ -497,6 +497,7 @@ idpcg generate --config examples/comfyui_request.json
 更多说明见：
 
 ```text
+docs/COMFYUI_BEGINNER_GUIDE.md
 docs/SAFETY.md
 docs/REAL_BACKEND.md
 ```
