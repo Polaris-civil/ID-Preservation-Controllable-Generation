@@ -3,15 +3,15 @@ set -euo pipefail
 
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip setuptools wheel
-python -m pip install -e .
+python -m pip install --upgrade pip uv
+uv sync --extra dev
 
 cat <<'MSG'
 Environment ready.
 
 For local development and tests, run:
-  pip install -e ".[dev]"
+  uv run python -m unittest discover -s tests
 
 For real SDXL/HunyuanDiT training and inference dependencies, run:
-  pip install -e ".[full]"
+  uv sync --extra full
 MSG

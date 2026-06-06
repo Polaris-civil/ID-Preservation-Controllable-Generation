@@ -68,7 +68,7 @@ cd ID-Preservation-Controllable-Generation
 安装为可编辑包：
 
 ```bash
-python -m pip install -e .
+uv sync --extra dev
 ```
 
 Python 版本要求：
@@ -80,7 +80,7 @@ Python >= 3.9
 如果后续要接入真实 SDXL、HunyuanDiT、Diffusers 或 ControlNet 训练推理，再安装完整依赖：
 
 ```bash
-pip install -r requirements-full.txt
+uv sync --extra full
 ```
 
 ## 快速运行
@@ -88,7 +88,7 @@ pip install -r requirements-full.txt
 运行离线 demo：
 
 ```bash
-python examples/run_demo.py
+uv run python examples/run_demo.py
 ```
 
 输出文件：
@@ -133,7 +133,7 @@ http://127.0.0.1:8188
 检查 API：
 
 ```bash
-idpcg comfyui-check --url http://127.0.0.1:8188
+uv run idpcg comfyui-check --url http://127.0.0.1:8188
 ```
 
 ## 命令行使用
@@ -141,7 +141,7 @@ idpcg comfyui-check --url http://127.0.0.1:8188
 ### 1. 提取并解耦标签
 
 ```bash
-idpcg tag examples/assets/fan_01.jpg examples/assets/fan_02.jpg --role fan
+uv run idpcg tag examples/assets/fan_01.jpg examples/assets/fan_02.jpg --role fan
 ```
 
 输出会包含两部分：
@@ -152,7 +152,7 @@ idpcg tag examples/assets/fan_01.jpg examples/assets/fan_02.jpg --role fan
 ### 2. 准备 LoRA 训练清单
 
 ```bash
-idpcg train-lora examples/assets/fan_01.jpg examples/assets/fan_02.jpg \
+uv run idpcg train-lora examples/assets/fan_01.jpg examples/assets/fan_02.jpg \
   --trigger-token fan_person \
   --rank 16 \
   --alpha 16 \
@@ -173,7 +173,7 @@ checkpoints/fan_lora/adapter_model.safetensors
 ### 3. 直接用 CLI 生成合照
 
 ```bash
-idpcg generate \
+uv run idpcg generate \
   --fan-refs examples/assets/fan_01.jpg examples/assets/fan_02.jpg \
   --celebrity-refs examples/assets/star_01.jpg \
   --pose-image examples/assets/openpose.png \
@@ -196,7 +196,7 @@ outputs/result.manifest.json
 推荐使用配置文件管理复杂参数：
 
 ```bash
-idpcg generate --config examples/generation_request.json
+uv run idpcg generate --config examples/generation_request.json
 ```
 
 配置示例在：
@@ -220,7 +220,7 @@ examples/generation_request.json
 如果你要接入 ComfyUI，可以先生成真正的 ComfyUI API payload，而不提交任务：
 
 ```bash
-idpcg generate --config examples/comfyui_request.json
+uv run idpcg generate --config examples/comfyui_request.json
 ```
 
 输出类似：
@@ -237,7 +237,7 @@ outputs/comfyui_result.comfyui_payload.json
 先检查 ComfyUI 服务是否在线：
 
 ```bash
-idpcg comfyui-check --url http://127.0.0.1:8188
+uv run idpcg comfyui-check --url http://127.0.0.1:8188
 ```
 
 ```json
@@ -257,7 +257,7 @@ idpcg comfyui-check --url http://127.0.0.1:8188
 然后运行：
 
 ```bash
-idpcg generate --config examples/comfyui_request.json
+uv run idpcg generate --config examples/comfyui_request.json
 ```
 
 后端会执行：
@@ -307,19 +307,19 @@ workflows/comfyui_api_txt2img.json
 ### 6. 导出 ComfyUI 工作流模板
 
 ```bash
-idpcg workflow --output outputs/comfyui_workflow.json
+uv run idpcg workflow --output outputs/comfyui_workflow.json
 ```
 
 这个命令默认导出说明型可视化模板。要导出可直接提交 `/prompt` 的 API workflow：
 
 ```bash
-idpcg workflow --kind api --output outputs/comfyui_api_txt2img.json
+uv run idpcg workflow --kind api --output outputs/comfyui_api_txt2img.json
 ```
 
 要导出 LoRA + OpenPose ControlNet 的现成模块组合 workflow：
 
 ```bash
-idpcg workflow --kind lora-openpose --output outputs/comfyui_api_lora_openpose.json
+uv run idpcg workflow --kind lora-openpose --output outputs/comfyui_api_lora_openpose.json
 ```
 
 模板源文件：
@@ -357,7 +357,7 @@ Workflow: workflows/comfyui_api_lora_openpose.json
 运行：
 
 ```bash
-idpcg generate --config examples/comfyui_lora_openpose_request.json
+uv run idpcg generate --config examples/comfyui_lora_openpose_request.json
 ```
 
 输出：
@@ -523,15 +523,15 @@ backend_for_request(...)
 运行标准库测试：
 
 ```bash
-python -m unittest discover -s tests
+uv run python -m unittest discover -s tests
 ```
 
 运行基础 smoke test：
 
 ```bash
-python examples/run_demo.py
-idpcg generate --config examples/generation_request.json
-idpcg generate --config examples/comfyui_request.json
+uv run python examples/run_demo.py
+uv run idpcg generate --config examples/generation_request.json
+uv run idpcg generate --config examples/comfyui_request.json
 ```
 
 ## 注意事项

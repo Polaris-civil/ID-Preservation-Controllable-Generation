@@ -1,19 +1,19 @@
 .PHONY: install dev test demo workflow clean
 
 install:
-	python -m pip install -e .
+	uv sync
 
 dev:
-	python -m pip install -e .
+	uv sync --extra dev
 
 test:
-	python -m unittest discover -s tests
+	uv run python -m unittest discover -s tests
 
 demo:
-	python examples/run_demo.py
+	uv run python examples/run_demo.py
 
 workflow:
-	idpcg workflow --output outputs/comfyui_workflow.json
+	uv run idpcg workflow --output outputs/comfyui_workflow.json
 
 clean:
 	rm -rf outputs checkpoints build dist *.egg-info .pytest_cache

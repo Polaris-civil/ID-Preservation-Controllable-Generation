@@ -53,7 +53,7 @@ cd E:\trae\AIGC_github\ID-Preservation-Controllable-Generation
 检查 API：
 
 ```powershell
-idpcg comfyui-check --url http://127.0.0.1:8188
+uv run idpcg comfyui-check --url http://127.0.0.1:8188
 ```
 
 如果返回 `"ok": true`，说明 ComfyUI API 可以被项目调用。
@@ -137,7 +137,7 @@ examples/comfyui_request.json
 
 ```powershell
 cd E:\trae\AIGC_github\ID-Preservation-Controllable-Generation
-idpcg generate --config examples\comfyui_request.json
+uv run idpcg generate --config examples\comfyui_request.json
 ```
 
 输出会在：
@@ -181,7 +181,7 @@ ComfyUI 负责：
 如果暂时不训练自己的 LoRA，可以先跑现成模块组合：
 
 ```powershell
-idpcg generate --config examples\comfyui_lora_openpose_request.json
+uv run idpcg generate --config examples\comfyui_lora_openpose_request.json
 ```
 
 这个配置会调用：
@@ -252,7 +252,7 @@ SDXL + 多控制器可能显存紧张
 先检查服务：
 
 ```powershell
-idpcg comfyui-check --url http://127.0.0.1:8188
+uv run idpcg comfyui-check --url http://127.0.0.1:8188
 ```
 
 如果失败，重新启动：

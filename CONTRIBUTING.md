@@ -3,27 +3,21 @@
 ## Development Setup
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip setuptools wheel
-python -m pip install -e .
+uv sync --extra dev
 ```
 
 On Windows PowerShell:
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip setuptools wheel
-python -m pip install -e .
+uv sync --extra dev
 ```
 
 ## Checks
 
 ```bash
-python examples/run_demo.py
-idpcg generate --config examples/generation_request.json
-python -m unittest discover -s tests
+uv run python examples/run_demo.py
+uv run idpcg generate --config examples/generation_request.json
+uv run python -m unittest discover -s tests
 ```
 
 ## Design Rules
