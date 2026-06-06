@@ -24,6 +24,9 @@ class ModelConfig:
     comfyui_url: str = "http://127.0.0.1:8188"
     comfyui_workflow: str = "workflows/comfyui_workflow.json"
     submit_comfyui_job: bool = False
+    download_comfyui_output: bool = True
+    comfyui_timeout: int = 600
+    comfyui_poll_interval: float = 1.0
 
 
 @dataclass

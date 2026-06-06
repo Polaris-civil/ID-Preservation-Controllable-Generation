@@ -16,6 +16,15 @@ class CliTest(unittest.TestCase):
             text = target.read_text(encoding="utf-8")
             self.assertIn("ID-Preservation Controllable Generation", text)
 
+    def test_workflow_command_copies_api_template(self) -> None:
+        with TemporaryDirectory() as tmp:
+            target = Path(tmp) / "workflow_api.json"
+
+            self.assertEqual(main(["workflow", "--kind", "api", "--output", str(target)]), 0)
+
+            data = json.loads(target.read_text(encoding="utf-8"))
+            self.assertEqual(data["7"]["class_type"], "SaveImage")
+
     def test_generate_config_preserves_output_path(self) -> None:
         with TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

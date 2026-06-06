@@ -185,7 +185,7 @@ examples/generation_request.json
 
 ### 5. 生成 ComfyUI payload
 
-如果你要接入 ComfyUI，可以先生成 payload 而不真正提交任务：
+如果你要接入 ComfyUI，可以先生成真正的 ComfyUI API payload，而不提交任务：
 
 ```bash
 idpcg generate --config examples/comfyui_request.json
@@ -198,10 +198,68 @@ outputs/comfyui_result.manifest.json
 outputs/comfyui_result.comfyui_payload.json
 ```
 
-默认 `submit_comfyui_job` 是 `false`。确认本地 ComfyUI workflow 节点名称和插件匹配后，再在配置里改为：
+`outputs/comfyui_result.comfyui_payload.json` 是可提交给 ComfyUI `/prompt` 接口的 API graph，不是说明型占位 JSON。
+
+默认 `submit_comfyui_job` 是 `false`。确认本地 ComfyUI 已启动，且 checkpoint 名称存在后，再在配置里改为：
+
+先检查 ComfyUI 服务是否在线：
+
+```bash
+idpcg comfyui-check --url http://127.0.0.1:8188
+```
 
 ```json
 "submit_comfyui_job": true
+```
+
+然后运行：
+
+```bash
+idpcg generate --config examples/comfyui_request.json
+```
+
+后端会执行：
+
+1. 读取或生成 ComfyUI API workflow。
+2. 将 prompt、negative prompt、seed、checkpoint 等参数填入节点。
+3. 如果本地参考图存在，上传到 `/upload/image`。
+4. 提交到 `/prompt`。
+5. 轮询 `/history/{prompt_id}`。
+6. 通过 `/view` 下载第一张输出图到 `output_path`。
+
+内置的可运行基础工作流是：
+
+```text
+workflows/comfyui_api_txt2img.json
+```
+
+这个工作流只依赖 ComfyUI 原生节点：
+
+- `CheckpointLoaderSimple`
+- `CLIPTextEncode`
+- `EmptyLatentImage`
+- `KSampler`
+- `VAEDecode`
+- `SaveImage`
+
+如果你要启用 IP-Adapter、ControlNet、LoRA 等扩展节点，需要从 ComfyUI 导出 API 格式 workflow，然后在 `examples/comfyui_request.json` 中把 `comfyui_workflow` 指向你的自定义 JSON。自定义 workflow 可以使用这些占位符：
+
+```text
+{{checkpoint}}
+{{positive_prompt}}
+{{negative_prompt}}
+{{seed}}
+{{width}}
+{{height}}
+{{batch_size}}
+{{steps}}
+{{cfg}}
+{{sampler_name}}
+{{scheduler}}
+{{filename_prefix}}
+{{pose_image_upload}}
+{{fan_ref_upload}}
+{{celebrity_ref_upload}}
 ```
 
 ### 6. 导出 ComfyUI 工作流模板
@@ -210,10 +268,17 @@ outputs/comfyui_result.comfyui_payload.json
 idpcg workflow --output outputs/comfyui_workflow.json
 ```
 
+这个命令默认导出说明型可视化模板。要导出可直接提交 `/prompt` 的 API workflow：
+
+```bash
+idpcg workflow --kind api --output outputs/comfyui_api_txt2img.json
+```
+
 模板源文件：
 
 ```text
 workflows/comfyui_workflow.json
+workflows/comfyui_api_txt2img.json
 ```
 
 安装包内也包含同一份模板：

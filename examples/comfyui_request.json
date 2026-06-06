@@ -20,9 +20,13 @@
   },
   "model": {
     "backend": "comfyui",
+    "base_model": "sd_xl_base_1.0.safetensors",
     "comfyui_url": "http://127.0.0.1:8188",
-    "comfyui_workflow": "workflows/comfyui_workflow.json",
+    "comfyui_workflow": "workflows/comfyui_api_txt2img.json",
     "submit_comfyui_job": false,
+    "download_comfyui_output": true,
+    "comfyui_timeout": 600,
+    "comfyui_poll_interval": 1.0,
     "seed": 1234
   }
 }

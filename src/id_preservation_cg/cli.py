@@ -6,8 +6,10 @@ import argparse
 from importlib import resources
 import json
 from pathlib import Path
+from urllib.error import URLError
 from typing import List, Optional
 
+from .backends import ComfyUIClient
 from .config import ControlConfig, GenerationRequest, LoraConfig, load_generation_request
 from .lora import LoraTrainer
 from .pipeline import ControllableGenerationPipeline
@@ -84,15 +86,26 @@ def cmd_generate(args: argparse.Namespace) -> int:
 def cmd_workflow(args: argparse.Namespace) -> int:
     target = Path(args.output)
     target.parent.mkdir(parents=True, exist_ok=True)
+    filename = "comfyui_api_txt2img.json" if args.kind == "api" else "comfyui_workflow.json"
     try:
-        text = resources.files("id_preservation_cg.assets").joinpath("comfyui_workflow.json").read_text(encoding="utf-8")
+        text = resources.files("id_preservation_cg.assets").joinpath(filename).read_text(encoding="utf-8")
     except (FileNotFoundError, ModuleNotFoundError):
-        source = Path(__file__).resolve().parents[2] / "workflows" / "comfyui_workflow.json"
+        source = Path(__file__).resolve().parents[2] / "workflows" / filename
         if not source.exists():
             raise FileNotFoundError(f"Workflow template not found: {source}")
         text = source.read_text(encoding="utf-8")
     target.write_text(text, encoding="utf-8")
     print(f"ComfyUI workflow copied to {target}")
+    return 0
+
+
+def cmd_comfyui_check(args: argparse.Namespace) -> int:
+    try:
+        stats = ComfyUIClient(args.url).system_stats()
+    except URLError as exc:
+        print(json.dumps({"ok": False, "url": args.url, "error": str(exc)}, indent=2, ensure_ascii=False))
+        return 1
+    print(json.dumps({"ok": True, "url": args.url, "system_stats": stats}, indent=2, ensure_ascii=False))
     return 0
 
 
@@ -138,7 +151,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     workflow = subparsers.add_parser("workflow", help="Copy the example ComfyUI workflow JSON")
     workflow.add_argument("--output", default="outputs/comfyui_workflow.json")
+    workflow.add_argument("--kind", choices=["visual", "api"], default="visual")
     workflow.set_defaults(func=cmd_workflow)
+
+    comfyui_check = subparsers.add_parser("comfyui-check", help="Check whether a ComfyUI HTTP API server is reachable")
+    comfyui_check.add_argument("--url", default="http://127.0.0.1:8188")
+    comfyui_check.set_defaults(func=cmd_comfyui_check)
     return parser
 
 

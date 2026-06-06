@@ -24,8 +24,9 @@ class BackendTest(unittest.TestCase):
             self.assertTrue(Path(result["manifest"]).exists())
             self.assertTrue(payload_path.exists())
             payload = json.loads(payload_path.read_text(encoding="utf-8"))
-            self.assertEqual(payload["prompt"]["fan_refs"], ["fan.jpg"])
-            self.assertEqual(payload["prompt"]["seed"], 42)
+            self.assertEqual(payload["prompt"]["5"]["inputs"]["seed"], 42)
+            self.assertEqual(payload["prompt"]["7"]["class_type"], "SaveImage")
+            self.assertEqual(payload["extra_data"]["extra_pnginfo"]["idpcg"]["fan_refs"], ["fan.jpg"])
 
 
 if __name__ == "__main__":
