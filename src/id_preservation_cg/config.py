@@ -43,6 +43,7 @@ class ModelConfig:
     controlnet_end_percent: float = 1.0
     ip_adapter_name: str = ""
     ip_adapter_weight: float = 0.75
+    ip_adapter_preset: str = "STANDARD (medium strength)"
     clip_vision_name: str = ""
 
 

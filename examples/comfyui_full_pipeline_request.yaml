@@ -12,9 +12,8 @@
 #   3. 以下模型已下载到 ComfyUI 对应目录:
 #      - checkpoints/v1-5-pruned-emaonly.safetensors
 #      - ipadapter/ip-adapter_sd15.safetensors
-#      - clip_vision/sd1.5_clip_vision.safetensors
 #      - controlnet/control_v11p_sd15_openpose.safetensors
-#      - loras/<你的身份 LoRA>.safetensors
+#      - loras/lcm-lora-sdv1-5.safetensors
 #
 # 用法: uv run idpcg generate --config examples/comfyui_full_pipeline_request.yaml
 # =============================================================================
@@ -70,13 +69,14 @@ model:
   width: 512
   height: 512
   batch_size: 1
-  steps: 25
-  cfg: 7.0
-  sampler_name: dpmpp_2m
-  scheduler: karras
+  steps: 8                    # LCM LoRA 只需 4~8 步
+  cfg: 1.5                    # LCM 推荐的 CFG 值
+  sampler_name: lcm           # LCM 专用采样器
+  scheduler: simple           # LCM 配套调度器
 
-  # ---- LoRA（身份特征）------------------
-  lora_name: ""                       # 填你自己训练的身份 LoRA 文件名
+  # ---- LoRA（当前用 LCM 占位）---------------
+  # 等训练好自己的身份 LoRA 后替换此文件名
+  lora_name: lcm-lora-sdv1-5.safetensors
   lora_strength_model: 0.8
   lora_strength_clip: 0.8
 
@@ -89,4 +89,4 @@ model:
   # ---- IP-Adapter（人脸一致）------------
   ip_adapter_name: ip-adapter_sd15.safetensors
   ip_adapter_weight: 0.75
-  clip_vision_name: sd1.5_clip_vision.safetensors
+  ip_adapter_preset: "STANDARD (medium strength)"

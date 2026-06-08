@@ -5,92 +5,69 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-green.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![uv](https://img.shields.io/badge/build-uv-724d97?logo=astral)](https://docs.astral.sh/uv/)
 
-一个面向”人物 ID 保持 + 可控生成”的文生图项目骨架，目标场景是生成粉丝与明星的高一致性合照：粉丝身份特征稳定，明星脸部结构一致，同时支持控制动作、服装和场景。
+### 简体中文
 
-本仓库不是单个脚本，而是一个完整可安装的 Python 项目。它包含离线 mock 后端、命令行工具、Python API、LoRA 训练清单生成器、ComfyUI 工作流模板、测试、CI，以及真实模型接入说明。
+只需准备少量人物参考图、姿态图和文本提示词，就可以组织一条“人物 ID 保持 + 姿态控制 + 服装场景控制”的文生图生成链路。
 
-默认实现不下载大模型，方便先跑通完整流程。真实生成时可以把 mock 后端替换为 ComfyUI、SDXL、HunyuanDiT 或 Diffusers 后端。
+本项目不是单个出图脚本，而是一个可安装、可测试、可替换真实模型的 Python 工程骨架。默认使用离线 mock 后端，不下载大模型，也能先跑通完整流程；需要真实出图时，可以切换到 ComfyUI，并逐步接入 LoRA、IP-Adapter、ControlNet、SDXL、HunyuanDiT 或 Diffusers。
 
-## 项目痛点
+## 功能特性
 
-少样本人像 LoRA 微调时，很容易把人物 ID、衣服、姿态、背景绑定在一起学习。例如参考图里一直是同一件衣服、同一角度、同一背景，模型就可能把这些非身份信息也记进 ID。这样生成时虽然人像像，但动作和场景泛化差。
+- [x] 支持人物参考图标签提取，并将标签拆分为 `身份`、`姿态`、`服装`、`背景` 四类。
+- [x] 支持少样本身份 LoRA 训练清单生成，内置 Prompt Dropout 和标签扰动策略。
+- [x] 支持 IP-Adapter、ControlNet、Style LoRA 等控制器配置，便于组合身份、动作和风格控制。
+- [x] 支持离线 mock 后端，适合无显卡、无模型环境下验证 pipeline、CLI 和测试。
+- [x] 支持 ComfyUI API payload 生成，并可选择提交任务、轮询历史、下载输出图片。
+- [x] 提供基础 txt2img、LoRA + OpenPose、完整多控制器 ComfyUI 工作流模板。
+- [x] 提供命令行工具 `idpcg`，支持打标、生成、LoRA 清单、工作流导出和 ComfyUI 连通性检查。
+- [x] 提供 Python API，可以在自己的脚本或服务中直接调用生成流水线。
+- [x] 包含单元测试、CI、真实模型接入说明和安全注意事项。
 
-本项目采用语义解耦思路，将图像标签拆成四类：
+## 适用场景
 
-- ID：脸型、五官、发型、肤色等身份特征。
-- 姿态：动作、视角、身体布局、站姿或坐姿。
-- 服装：衣服、配饰、材质、穿搭风格。
-- 背景：地点、光照、场景风格、摄影环境。
+- 生成粉丝与明星、角色与角色、用户与虚拟形象的合照实验。
+- 研究少样本人像 LoRA 中“身份特征”和“服装、姿态、背景”绑定过强的问题。
+- 将 ComfyUI 工作流纳入可复现的 Python 工程，而不是只在画布里手动调节点。
+- 为后续接入真实 WD14 Tagger、VLM、Diffusers 或训练框架提供工程起点。
 
-生成阶段再通过 LoRA、IP-Adapter、ControlNet、Style LoRA 或 Redux 风格模块协同控制。
+## 配置要求
 
-## 核心特性
+- Python `>= 3.9`
+- 推荐使用 [uv](https://docs.astral.sh/uv/) 管理环境和依赖。
+- mock 模式不需要 GPU，也不需要下载模型。
+- ComfyUI 真出图需要本机已安装 ComfyUI，并准备对应 checkpoint、LoRA、ControlNet 或 IP-Adapter 模型。
 
-| 模块 | 能力 | 当前实现 | 真实模型替换建议 |
-| --- | --- | --- | --- |
-| 图像标签提取 | 从参考图自动提取视觉标签 | WD14-like 离线模拟 Tagger | WD14 ONNX 或 Transformers Tagger |
-| 多模态语义重构 | 将原始标签重构为 ID、姿态、服装、背景 | 规则化 VLM 模拟器 | Qwen-VL、DeepSeek-VL 或其他 VLM |
-| 小样本 LoRA | 5-20 张图学习人物 ID | 生成训练 manifest 和占位 adapter | Diffusers / Accelerate LoRA 训练 |
-| 防过拟合策略 | Prompt Dropout、标签扰动 | 已内置在 dataset builder | 接入真实 dataloader |
-| 人脸一致性 | 约束人脸结构与身份一致 | IP-Adapter 控制器 manifest | ComfyUI IP-Adapter 插件 |
-| 动作控制 | 使用 OpenPose 等姿态图控制动作 | ControlNet 控制器 manifest | SDXL / HunyuanDiT ControlNet |
-| 风格迁移 | 控制服装、背景和整体风格 | Style Controller 开关 | Style LoRA、Redux、Reference-only |
-| 后端 | 离线预览、ComfyUI payload | mock SVG、ComfyUI payload writer | ComfyUI 提交或原生 Diffusers 后端 |
+| 项目 | 最低配置 | 推荐配置 | 说明 |
+| ---- | -------- | -------- | ---- |
+| CPU | 4 核 | 6 核及以上 | mock、配置生成、payload 生成主要依赖 CPU |
+| RAM | 4 GB | 8 GB 及以上 | ComfyUI 和本地模型越多，内存需求越高 |
+| GPU | 非必须 | 6 GB 显存及以上 | 真实出图和训练建议使用独立显卡 |
+| 磁盘 | 1 GB | 20 GB 及以上 | mock 项目很小，真实模型会占用大量空间 |
 
-## 系统架构
+## 快速开始
 
-```text
-参考图像
-  |
-  v
-WD14-like Tagger
-  |
-  v
-多模态语义重构器
-  |
-  +--> ID 标签 ---------> 少样本 LoRA 训练
-  +--> 姿态标签 --------> ControlNet / OpenPose 控制
-  +--> 服装标签 --------> Style LoRA / Redux / prompt 控制
-  +--> 背景标签 --------> 场景 prompt / 风格控制
+### 推荐使用方式
 
-GenerationRequest
-  |
-  v
-控制器栈：LoRA + IP-Adapter + ControlNet + Style
-  |
-  v
-生成后端：mock SVG / ComfyUI API payload / 自定义 Diffusers 后端
-```
+- 只想先看流程：运行 `examples/run_demo.py`，不需要模型。
+- 想验证 CLI 和配置文件：运行 `idpcg generate --config examples/generation_request.yaml`。
+- 想接入真实出图：先启动 ComfyUI，再运行 `examples/comfyui_request.yaml`。
+- 想做身份一致性实验：先准备人物参考图，生成 LoRA 训练 manifest，再替换真实训练逻辑。
 
-## 安装
-
-进入项目目录：
+### 1. 安装依赖
 
 ```bash
+git clone https://github.com/Polaris-civil/ID-Preservation-Controllable-Generation.git
 cd ID-Preservation-Controllable-Generation
-```
-
-安装为可编辑包：
-
-```bash
 uv sync --extra dev
 ```
 
-Python 版本要求：
-
-```text
-Python >= 3.9
-```
-
-如果后续要接入真实 SDXL、HunyuanDiT、Diffusers 或 ControlNet 训练推理，再安装完整依赖：
+如果后续要接入 Diffusers、Transformers、训练或图像处理依赖，再安装完整依赖：
 
 ```bash
 uv sync --extra full
 ```
 
-## 快速运行
-
-运行离线 demo：
+### 2. 运行离线 Demo
 
 ```bash
 uv run python examples/run_demo.py
@@ -105,50 +82,121 @@ outputs/demo_result.manifest.json
 
 说明：
 
-- `demo_result.svg` 是离线 mock 后端生成的可视化占位结果。
-- `demo_result.manifest.json` 记录完整请求、prompt、解耦标签、控制器配置和后端信息。
-- 默认不需要真实图片；示例路径即使不存在，也可以跑通流程。
+- `demo_result.svg` 是 mock 后端生成的占位示意图，不是真实照片。
+- `demo_result.manifest.json` 会记录 prompt、参考图路径、语义解耦结果、控制器配置和输出路径。
+- 示例路径即使没有真实图片，也可以跑通完整流程。
 
-## 本机 ComfyUI 启动方式
+### 3. 使用配置文件生成
 
-如果 ComfyUI 安装在本仓库同级目录（即 `../ComfyUI`），可以通过项目脚本启动：
+推荐使用 YAML 配置文件，便于阅读和修改：
+
+```bash
+uv run idpcg generate --config examples/generation_request.yaml
+```
+
+也可以直接通过命令行传参：
+
+```bash
+uv run idpcg generate \
+  --fan-refs examples/assets/fan_01.jpg examples/assets/fan_02.jpg \
+  --celebrity-refs examples/assets/star_01.jpg \
+  --pose-image examples/assets/openpose_two_person.png \
+  --prompt "a fan and a famous singer taking a friendly red-carpet photo" \
+  --clothing-prompt "fan wearing a silver jacket, celebrity wearing a black stage suit" \
+  --scene-prompt "cinematic red carpet, warm flash photography" \
+  --use-style-lora \
+  --output outputs/result.svg
+```
+
+## ComfyUI 部署
+
+### 1. 启动 ComfyUI
+
+如果 ComfyUI 安装在本仓库同级目录，也就是 `../ComfyUI`，可以直接使用脚本启动：
 
 ```powershell
 .\scripts\start_comfyui.ps1
 ```
 
-停止：
+停止服务：
 
 ```powershell
 .\scripts\stop_comfyui.ps1
 ```
 
-浏览器打开：
+浏览器访问：
 
 ```text
 http://127.0.0.1:8188
 ```
 
-检查 API：
+检查 API 是否可用：
 
 ```bash
 uv run idpcg comfyui-check --url http://127.0.0.1:8188
 ```
 
-## 命令行使用
+### 2. 生成 ComfyUI API Payload
 
-### 1. 提取并解耦标签
+默认配置只生成 payload，不提交任务：
+
+```bash
+uv run idpcg generate --config examples/comfyui_request.yaml
+```
+
+输出类似：
+
+```text
+outputs/comfyui_result.manifest.json
+outputs/comfyui_result.comfyui_payload.json
+```
+
+确认 ComfyUI 已启动、checkpoint 文件名正确后，把配置里的 `submit_comfyui_job` 改为 `true`，即可提交真实任务。
+
+### 3. 使用 LoRA + OpenPose 示例
+
+```bash
+uv run idpcg generate --config examples/comfyui_lora_openpose_request.yaml
+```
+
+这个配置用于验证现成模块组合链路：
+
+- `v1-5-pruned-emaonly.safetensors`
+- `lcm-lora-sdv1-5.safetensors`
+- `control_v11p_sd15_openpose.safetensors`
+- `workflows/comfyui_api_lora_openpose.json`
+
+注意：这里的 LCM LoRA 是加速采样用的 LoRA，不是人物身份 LoRA。要做真正的身份保持，需要替换成自己训练的人物 LoRA。
+
+### 4. 使用完整多控制器示例
+
+```bash
+uv run idpcg generate --config examples/comfyui_full_pipeline_request.yaml
+```
+
+这条链路会组合：
+
+- LoRA：注入身份或采样风格。
+- IP-Adapter：从参考图约束脸部结构。
+- ControlNet：用 OpenPose 控制动作和站位。
+- ComfyUI API workflow：`workflows/comfyui_api_full_pipeline.json`
+
+首次运行建议先把分辨率设为 `512x512`、`batch_size` 设为 `1`，逐项确认模型能加载后再提高参数。
+
+## 命令行说明
+
+### 提取并解耦标签
 
 ```bash
 uv run idpcg tag examples/assets/fan_01.jpg examples/assets/fan_02.jpg --role fan
 ```
 
-输出会包含两部分：
+输出包含：
 
-- `raw`：模拟 WD14 Tagger 提取的原始标签。
-- `decoupled`：拆分后的 ID、姿态、服装、背景标签。
+- `raw`：原始视觉标签。
+- `decoupled`：拆分后的身份、姿态、服装、背景标签。
 
-### 2. 准备 LoRA 训练清单
+### 准备 LoRA 训练清单
 
 ```bash
 uv run idpcg train-lora examples/assets/fan_01.jpg examples/assets/fan_02.jpg \
@@ -167,211 +215,27 @@ checkpoints/fan_lora/training_manifest.json
 checkpoints/fan_lora/adapter_model.safetensors
 ```
 
-当前 `adapter_model.safetensors` 是占位文件，用于表达完整流程。真实训练需要在 `LoraTrainer._run_real_training` 中接入 Diffusers 或 Accelerate。
+当前 `adapter_model.safetensors` 是占位文件。真实训练需要在 `src/id_preservation_cg/lora.py` 中实现 `LoraTrainer._run_real_training(...)`。
 
-### 3. 直接用 CLI 生成合照
-
-```bash
-uv run idpcg generate \
-  --fan-refs examples/assets/fan_01.jpg examples/assets/fan_02.jpg \
-  --celebrity-refs examples/assets/star_01.jpg \
-  --pose-image examples/assets/openpose.png \
-  --prompt "a fan and a famous singer taking a friendly red-carpet photo" \
-  --clothing-prompt "fan wearing a silver jacket, celebrity wearing a black stage suit" \
-  --scene-prompt "cinematic red carpet, warm flash photography" \
-  --use-style-lora \
-  --output outputs/result.svg
-```
-
-输出：
-
-```text
-outputs/result.svg
-outputs/result.manifest.json
-```
-
-### 4. 用配置文件生成
-
-推荐使用 **YAML** 格式的配置文件（支持注释，易读易改）。项目也兼容 JSON 格式。
-
-```bash
-# YAML 格式（推荐 — 有注释，可读性好）
-uv run idpcg generate --config examples/generation_request.yaml
-```
-
-配置文件包含以下内容：
-
-- 粉丝参考图路径。
-- 明星参考图路径。
-- OpenPose 姿态图路径。
-- 正向 prompt 和反向 prompt。
-- 服装、场景 prompt。
-- LoRA、IP-Adapter、ControlNet、Style LoRA 开关。
-- 后端配置。
-
-> **小提示：** `examples/` 里的 `.yaml` 是**项目配置文件**（CLI 读取），`workflows/` 里的 `.json` 是 **ComfyUI 工作流**（ComfyUI 读取）。用后缀就能一眼区分，不会搞混。
-
-### 5. 生成 ComfyUI payload
-
-如果你要接入 ComfyUI，可以先生成真正的 ComfyUI API payload，而不提交任务：
-
-```bash
-uv run idpcg generate --config examples/comfyui_request.yaml
-```
-
-输出类似：
-
-```text
-outputs/comfyui_result.manifest.json
-outputs/comfyui_result.comfyui_payload.json
-```
-
-`outputs/comfyui_result.comfyui_payload.json` 是可提交给 ComfyUI `/prompt` 接口的 API graph，不是说明型占位 JSON。
-
-默认 `submit_comfyui_job` 是 `false`。确认本地 ComfyUI 已启动，且 checkpoint 名称存在后，再在配置里改为 `true`。
-
-先检查 ComfyUI 服务是否在线：
-
-```bash
-uv run idpcg comfyui-check --url http://127.0.0.1:8188
-```
-
-显存较小的显卡建议先用 SD1.5 512x512，参数参考如下：
-
-```yaml
-base_model: "v1-5-pruned-emaonly.safetensors"
-width: 512
-height: 512
-steps: 25
-cfg: 7.0
-```
-
-确认无误后运行：
-
-```bash
-uv run idpcg generate --config examples/comfyui_request.yaml
-```
-
-后端会执行：
-
-1. 读取或生成 ComfyUI API workflow。
-2. 将 prompt、negative prompt、seed、checkpoint 等参数填入节点。
-3. 如果本地参考图存在，上传到 `/upload/image`。
-4. 提交到 `/prompt`。
-5. 轮询 `/history/{prompt_id}`。
-6. 通过 `/view` 下载第一张输出图到 `output_path`。
-
-内置的可运行基础工作流是：
-
-```text
-workflows/comfyui_api_txt2img.json
-```
-
-这个工作流只依赖 ComfyUI 原生节点：
-
-- `CheckpointLoaderSimple`
-- `CLIPTextEncode`
-- `EmptyLatentImage`
-- `KSampler`
-- `VAEDecode`
-- `SaveImage`
-
-如果你要启用 IP-Adapter、ControlNet、LoRA 等扩展节点，需要从 ComfyUI 导出 API 格式 workflow，然后在 `examples/comfyui_request.yaml` 中把 `comfyui_workflow` 指向你的自定义 JSON。自定义 workflow 可以使用这些占位符：
-
-```text
-{{checkpoint}}
-{{positive_prompt}}
-{{negative_prompt}}
-{{seed}}
-{{width}}
-{{height}}
-{{batch_size}}
-{{steps}}
-{{cfg}}
-{{sampler_name}}
-{{scheduler}}
-{{filename_prefix}}
-{{pose_image_upload}}
-{{fan_ref_upload}}
-{{celebrity_ref_upload}}
-```
-
-### 6. 导出 ComfyUI 工作流模板
+### 导出 ComfyUI 工作流模板
 
 ```bash
 uv run idpcg workflow --output outputs/comfyui_workflow.json
 ```
 
-这个命令默认导出说明型可视化模板。要导出可直接提交 `/prompt` 的 API workflow：
+导出可提交 `/prompt` 的基础 API workflow：
 
 ```bash
 uv run idpcg workflow --kind api --output outputs/comfyui_api_txt2img.json
 ```
 
-要导出 LoRA + OpenPose ControlNet 的现成模块组合 workflow：
+导出 LoRA + OpenPose ControlNet workflow：
 
 ```bash
 uv run idpcg workflow --kind lora-openpose --output outputs/comfyui_api_lora_openpose.json
 ```
 
-模板源文件：
-
-```text
-workflows/comfyui_workflow.json
-workflows/comfyui_api_txt2img.json
-workflows/comfyui_api_lora_openpose.json
-```
-
-安装包内也包含同一份模板：
-
-```text
-src/id_preservation_cg/assets/comfyui_workflow.json
-```
-
-## 免训练现成模块流程
-
-如果暂时不训练自己的 ID LoRA，可以先用现成模块验证完整链路。本项目提供了一个示例配置：
-
-```text
-examples/comfyui_lora_openpose_request.yaml
-```
-
-它使用：
-
-```text
-基础模型: v1-5-pruned-emaonly.safetensors
-LoRA: lcm-lora-sdv1-5.safetensors
-ControlNet: control_v11p_sd15_openpose.safetensors
-姿态图: examples/assets/openpose_two_person.png
-Workflow: workflows/comfyui_api_lora_openpose.json
-```
-
-运行：
-
-```bash
-uv run idpcg generate --config examples/comfyui_lora_openpose_request.yaml
-```
-
-输出：
-
-```text
-outputs/comfyui_lora_openpose.png
-outputs/comfyui_lora_openpose.manifest.json
-outputs/comfyui_lora_openpose.comfyui_payload.json
-outputs/comfyui_lora_openpose.comfyui_history.json
-```
-
-这一步的意义是验证：
-
-- 本项目可以组织 prompt 和控制器信息。
-- ComfyUI 可以加载现成 LoRA。
-- ComfyUI 可以加载现成 OpenPose ControlNet。
-- 姿态图可以通过 API 上传并接入 LoadImage。
-- 生成结果和完整记录可以保存下来。
-
-注意：这里的 LCM LoRA 是加速/采样风格 LoRA，不是人物身份 LoRA。后续把它替换成你自己训练的身份 LoRA，才是本项目真正的核心价值。
-
-## Python API 使用
+## Python API
 
 ```python
 from id_preservation_cg import ControllableGenerationPipeline, GenerationRequest
@@ -397,202 +261,65 @@ print(result["image"])
 print(result["manifest"])
 ```
 
-## 目录结构
-
-### 整体概览
+## 项目结构
 
 ```text
 ID-Preservation-Controllable-Generation/
-├── src/id_preservation_cg/    ← 🧠 核心代码（Python 包）
-├── examples/                  ← 📋 示例配置文件 + 示例脚本 + 示例素材
-├── workflows/                 ← 🔧 ComfyUI 工作流模板（可拖进 ComfyUI）
-├── outputs/                   ← 🖼️ 生成结果输出
-├── scripts/                   ← ⚡ PowerShell 辅助脚本
-├── tests/                     ← 🧪 单元测试
-├── docs/                      ← 📖 补充文档
-├── pyproject.toml             ← 📦 项目元信息与依赖声明
-└── README.md                  ← 📄 你正在读的文件
+├── src/id_preservation_cg/    核心 Python 包
+├── examples/                  示例配置、Demo 脚本和素材
+├── workflows/                 ComfyUI 工作流模板
+├── outputs/                   生成结果和运行记录
+├── scripts/                   PowerShell 辅助脚本
+├── tests/                     单元测试
+├── docs/                      补充文档
+├── pyproject.toml             项目元信息与依赖声明
+└── README.md                  当前文档
 ```
 
-### 🧠 `src/id_preservation_cg/` — 核心大脑
+核心模块：
 
-整个项目的 Python 包。每一个模块各司其职：
+| 文件 | 作用 |
+| ---- | ---- |
+| `tagging.py` | 模拟 WD14 标签提取，可替换为真实 tagger |
+| `semantic.py` | 将标签拆分为身份、姿态、服装、背景 |
+| `dataset.py` | 构建 LoRA caption 数据集，包含防过拟合策略 |
+| `lora.py` | LoRA 训练门面和 manifest 生成 |
+| `controllers.py` | 管理 LoRA、IP-Adapter、ControlNet、Style 控制器配置 |
+| `pipeline.py` | 编排打标、解耦、控制器加载和后端生成 |
+| `backends.py` | mock 后端、ComfyUI payload、任务提交和结果下载 |
+| `cli.py` | `idpcg` 命令行入口 |
+| `validation.py` | 请求参数校验 |
 
-| 文件 | 一句话 | 管什么 |
-|------|--------|--------|
-| `tagging.py` | **图像打标器** | 从照片里提取原始标签（黑头发、圆脸、站姿、红背景…）。目前是模拟版，可替换为真实 WD14 模型 |
-| `semantic.py` | **语义解耦器** | 把原始标签拆成四类：**身份 / 姿态 / 服装 / 背景**。这就是项目的核心创意——不让它们混在一起学 |
-| `lora.py` | **LoRA 训练门面** | 管理身份 LoRA 的小样本训练流程。目前生成占位模型文件，真训练时接入 Diffusers 或 Accelerate |
-| `dataset.py` | **数据集构建** | LoRA 训练时构建 caption 数据集，内置 Prompt Dropout 和标签扰动来防过拟合 |
-| `controllers.py` | **控制器栈** | 三个可独立开关的控制器：IP-Adapter（锁脸）、ControlNet（控姿势）、Style（控风格），每个都能调强度 |
-| `config.py` | **配置中心** | 所有参数的数据结构（`GenerationRequest`、`ModelConfig`、`ControlConfig`）。JSON 配置文件最终反序列化到这里 |
-| `pipeline.py` | **总流程编排** | 把打标 → 解耦 → 加载控制器 → 后端生成串成一条端到端流水线 |
-| `backends.py` | **生成后端** | 两种模式：Mock 后端生成占位 SVG 图；ComfyUI 后端提交 API 任务真出图，支持上传参考图、轮询结果、下载输出 |
-| `cli.py` | **命令行入口** | `idpcg tag`、`idpcg generate`、`idpcg train-lora`、`idpcg workflow` 等命令都在这里定义 |
-| `validation.py` | **输入校验** | 检查请求参数是否合法（路径、开关冲突、数值范围等） |
-| `assets/` | **内置资源** | 随包分发的工作流模板副本，与 `workflows/` 目录内容同步 |
+## 配置文件与工作流的区别
 
-### 📋 `examples/` — 示例配置与素材
+| 类型 | 位置 | 谁读取 | 用途 |
+| ---- | ---- | ------ | ---- |
+| 项目配置 | `examples/*.yaml` | `idpcg generate` | 描述参考图、prompt、控制器开关、输出路径和后端参数 |
+| ComfyUI 工作流 | `workflows/*.json` | ComfyUI / ComfyUI API | 描述节点图、模型加载、采样器、ControlNet、IP-Adapter 等连接方式 |
 
-> **注意：`examples/` 里的文件和 `workflows/` 里的文件是两种完全不同的东西！**
->
-> | | `examples/*.yaml` / `examples/*.json` | `workflows/*.json` |
-> |---|---|---|
-> | **是什么** | 📋 项目配置文件（YAML 或 JSON） | 🔧 ComfyUI 工作流（ComfyUI 原生 API 格式） |
-> | **能拖进 ComfyUI 吗** | ❌ 不能，ComfyUI 不认识 | ✅ 能，直接拖就显示节点图 |
-> | **内容是什么** | 用哪张照片、写什么提示词、开哪些控制器 | 节点怎么连：Checkpoint→LoRA→ControlNet→KSampler→VAE |
-> | **谁来读** | 项目的 CLI（`idpcg generate --config xxx.yaml`） | ComfyUI 画布 / ComfyUI API |
->
-> 一句话：**配置文件告诉项目"画什么"，工作流告诉 ComfyUI"怎么画"。**
->
-> **推荐用 `.yaml` 格式**作为配置文件——支持注释，层级靠缩进一目了然。后缀就能区分：`.yaml` = 项目配置，`.json` = ComfyUI 工作流。
+一句话：配置文件告诉本项目“画什么”，工作流告诉 ComfyUI“怎么画”。
 
-| 文件 | 干什么 |
-|------|--------|
-| `run_demo.py` | 一键 Demo 脚本，跑通完整 mock 流程 |
-| `generation_request.yaml` | Mock 模式配置——后端 `mock`，生成占位 SVG 快速验证 |
-| `comfyui_request.yaml` | ComfyUI 基础配置——txt2img 工作流 |
-| `comfyui_lora_openpose_request.yaml` | LoRA + ControlNet 组合——免训练验证多控制器链路 |
-| `comfyui_full_pipeline_request.yaml` | 🆕 完全体——LoRA + IP-Adapter + ControlNet 三合一 |
-| `assets/` 子目录 | 示例素材图片（fan_01.jpg、star_01.jpg、openpose.png 等） |
+## 接入真实模型
 
-### 🔧 `workflows/` — ComfyUI 工作流模板
+推荐按下面顺序逐步替换，不要一开始就把所有模块同时接上：
 
-每个 JSON 文件描述一个 ComfyUI 画布上的节点图。可以直接拖进 ComfyUI 界面查看和编辑。
+1. 替换 `src/id_preservation_cg/tagging.py`，接入真实 WD14 或同类图像 tagger。
+2. 替换 `src/id_preservation_cg/semantic.py`，接入 Qwen-VL、DeepSeek-VL 或其他 VLM，输出固定 schema。
+3. 实现 `src/id_preservation_cg/lora.py` 中的真实 LoRA 训练逻辑。
+4. 用 ComfyUI 导出自己的 API workflow，并在配置中设置 `model.comfyui_workflow`。
+5. 如果不使用 ComfyUI，可以在 `src/id_preservation_cg/backends.py` 中新增 Diffusers 后端。
 
-| 文件 | 复杂度 | 包含的节点 |
-|------|--------|-----------|
-| `comfyui_workflow.json` | ⭐ | 可视化模板，给人看的参考图，不可提交 API |
-| `comfyui_api_txt2img.json` | ⭐⭐ | 最简文生图：加载模型 → 写 prompt → 出图（仅 ComfyUI 原生节点） |
-| `comfyui_api_lora_openpose.json` | ⭐⭐⭐ | LoRA + ControlNet：模型加载 → LoRA 注入 → 骨骼图控姿势 → 出图 |
-| `comfyui_api_full_pipeline.json` | ⭐⭐⭐⭐⭐ | 🆕 全家桶：LoRA + IP-Adapter（锁脸）+ ControlNet（控姿势）→ 出图 |
-
-层级演进关系：
+更多说明见：
 
 ```text
-comfyui_api_txt2img.json          ← 地基（就一个文生图）
-        ↓ 加 LoRA + ControlNet
-comfyui_api_lora_openpose.json    ← 进阶（能控姿势了）
-        ↓ 再加 IP-Adapter
-comfyui_api_full_pipeline.json    ← 完全体（脸也锁住了）
+docs/REAL_BACKEND.md
+docs/COMFYUI_BEGINNER_GUIDE.md
+docs/SAFETY.md
 ```
-
-工作流使用 ComfyUI API 格式，节点中使用 `{{placeholder}}` 占位符。运行 `idpcg generate` 时，后端会自动将占位符替换为配置中的实际值（prompt、seed、checkpoint 名称、上传后的图片路径等）。
-
-### 🖼️ `outputs/` — 输出目录
-
-每次运行生成任务，产物都放在这里：
-
-| 后缀 | 是什么 |
-|------|--------|
-| `.svg` | Mock 模式生成的占位示意图（不是真照片，仅用于验证流程） |
-| `.png` | ComfyUI 真出图的实际图片 |
-| `.manifest.json` | **运行全记录**：输入参数、解耦后的标签、使用的控制器、后端信息、输出路径 |
-| `.comfyui_payload.json` | 发送给 ComfyUI `/prompt` 接口的完整请求体（可审计、可复现） |
-| `.comfyui_response.json` | ComfyUI 返回的原始响应（含 prompt_id） |
-| `.comfyui_history.json` | ComfyUI 生成完成后的历史记录（含输出文件名，用于下载图片） |
-
-### ⚡ `scripts/` — PowerShell 辅助脚本
-
-| 脚本 | 一句话 |
-|------|--------|
-| `start_comfyui.ps1` | 启动本仓库同级目录下的 ComfyUI（自动定位 `../ComfyUI/main.py`） |
-| `stop_comfyui.ps1` | 关闭 ComfyUI 后台进程 |
-| `create_demo_refs.ps1` | 创建演示用的参考图素材 |
-
-### 🧪 其余目录
-
-| 目录 | 内容 |
-|------|------|
-| `tests/` | 单元测试，运行 `uv run python -m unittest discover -s tests` 执行（目前 11 个测试） |
-| `docs/` | 补充文档：《接入真实模型指南》《安全注意事项》《ComfyUI 新手教程》 |
-| `pyproject.toml` | Python 项目的"身份证"：名称、版本、依赖声明、CLI 入口点 |
-
-## 接入真实模型的建议路径
-
-### 1. 替换真实 WD14 Tagger
-
-修改：
-
-```text
-src/id_preservation_cg/tagging.py
-```
-
-保持返回类型不变：
-
-```python
-ImageTags(path=str(image_path), tags=tags, confidence=score)
-```
-
-### 2. 接入 Qwen-VL 或 DeepSeek-VL
-
-修改：
-
-```text
-src/id_preservation_cg/semantic.py
-```
-
-要求 VLM 输出固定 schema：
-
-```json
-{
-  "identity": ["face shape", "eye detail", "hair style"],
-  "pose": ["standing", "three-quarter view"],
-  "clothing": ["silver jacket"],
-  "background": ["red carpet", "flash photography"]
-}
-```
-
-关键原则：ID 标签里不要混入衣服和背景，否则 LoRA 容易过拟合。
-
-### 3. 接入真实 LoRA 训练
-
-修改：
-
-```text
-src/id_preservation_cg/lora.py
-```
-
-重点实现：
-
-```python
-LoraTrainer._run_real_training(...)
-```
-
-建议使用：
-
-- SDXL 或 HunyuanDiT 作为 base model。
-- LoRA rank/alpha 控制容量。
-- Prompt Dropout 降低姿态和服装绑定。
-- 标签扰动增强泛化。
-
-### 4. 接入 ComfyUI 或 Diffusers 生成
-
-ComfyUI 已有 payload 后端：
-
-```text
-src/id_preservation_cg/backends.py
-```
-
-如果要接入原生 Diffusers，可以新增一个后端类，例如：
-
-```python
-class DiffusersBackend:
-    def render(...):
-        ...
-```
-
-然后在：
-
-```python
-backend_for_request(...)
-```
-
-里注册。
 
 ## 测试
 
-运行标准库测试：
+运行单元测试：
 
 ```bash
 uv run python -m unittest discover -s tests
@@ -606,7 +333,29 @@ uv run idpcg generate --config examples/generation_request.yaml
 uv run idpcg generate --config examples/comfyui_request.yaml
 ```
 
-## 注意事项
+## 常见问题
+
+### 运行 demo 需要真实图片吗？
+
+不需要。mock 模式允许示例路径不存在，适合先验证流程、配置结构和输出 manifest。
+
+### 为什么生成的是 SVG，不是真照片？
+
+因为默认后端是 `mock`。它用于离线验证工程链路，不执行真实扩散模型推理。要真出图，请把配置里的 `model.backend` 设为 `comfyui`，并确认 `submit_comfyui_job: true`。
+
+### ComfyUI 提示找不到 checkpoint 怎么办？
+
+确认模型文件已经放在 ComfyUI 的 `models/checkpoints/` 目录下，并且配置里的 `base_model` 和文件名完全一致，包括 `.safetensors` 后缀。
+
+### 显存不够怎么办？
+
+先使用 SD1.5、`512x512`、`batch_size: 1`，关闭不必要的控制器。等基础 workflow 稳定后，再逐步加入 LoRA、ControlNet 和 IP-Adapter。
+
+### 这个项目已经能训练真实人物 LoRA 吗？
+
+当前仓库提供训练清单、caption 构建和占位 adapter。真实训练需要接入 Diffusers、Accelerate 或你自己的训练脚本。
+
+## 安全说明
 
 真实人像生成属于敏感能力。正式使用前建议加入：
 
@@ -616,18 +365,16 @@ uv run idpcg generate --config examples/comfyui_request.yaml
 - 防冒充、防骚扰、防侵权、防虚假信息策略。
 - 对真人、公众人物和未成年人内容的额外限制。
 
-更多说明见：
+详见 [docs/SAFETY.md](docs/SAFETY.md)。
 
-```text
-docs/COMFYUI_BEGINNER_GUIDE.md
-docs/SAFETY.md
-docs/REAL_BACKEND.md
-```
+## 反馈建议
+
+可以通过以下方式参与：
+
+- 提交 [issue](https://github.com/Polaris-civil/ID-Preservation-Controllable-Generation/issues)。
+- 提交 [pull request](https://github.com/Polaris-civil/ID-Preservation-Controllable-Generation/pulls)。
+- 补充真实模型接入案例、ComfyUI workflow 或训练脚本。
 
 ## 许可证
 
-Apache-2.0。详见：
-
-```text
-LICENSE
-```
+Apache-2.0。详见 [LICENSE](LICENSE)。
